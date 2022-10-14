@@ -37,7 +37,7 @@ passport.use(
         }
         const validate = await user.isValidPassword(password)
         if (!validate) {
-          return done(null, false, {message: 'Wrong Password'})
+          return done(null, false, {message: 'Invalid Username or Password'})
         }
         return done(null, user, {message: 'Logged in successfully'})
       } catch (error) {

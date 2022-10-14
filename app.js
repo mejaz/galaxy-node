@@ -21,13 +21,9 @@ require('./auth/auth');
 app.use(express.json());
 // to serve the client app
 app.use(express.static(path.join(__dirname, './client-app/out')));
-app.get('/', (req,res) => {
-  res.sendFile(path.join(__dirname, './client-app/out/index.html'));
-});
-
 // to access public routes
 app.use('/api', loginSignupRoute);
-// // user route
+// user route
 app.use(
   '/user',
   passport.authenticate('jwt', { session: false }),
@@ -40,6 +36,12 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.json({ error: err });
 });
+
+app.get('/', (req,res) => {
+  res.sendFile(path.join(__dirname, './client-app/out/index.html'));
+});
+
+
 
 module.exports = app;
 

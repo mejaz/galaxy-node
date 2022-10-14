@@ -23,9 +23,7 @@ router.post(
       async (err, user, info) => {
         try {
           if (err || !user) {
-            const error = new Error('An error occurred.');
-
-            return next(error);
+            return res.status(401).json({ info });
           }
 
           req.login(
@@ -51,5 +49,8 @@ router.post(
   }
 );
 
+router.get('/verify-token', passport.authenticate('jwt', { session: false }), (req,res) => {
+  res.send();
+});
 
 module.exports = router;
