@@ -8,6 +8,8 @@ require("./db").connect()
 const express = require('express')
 const path = require('path');
 const passport = require('passport');
+const host = process.env.APP_HOST
+const port = process.env.APP_PORT
 
 // routes
 const loginSignupRoute = require('./routes/login-signup');
@@ -25,7 +27,7 @@ app.use(express.static(path.join(__dirname, './client-app/out')));
 app.use('/api', loginSignupRoute);
 // user route
 app.use(
-  '/user',
+  '/api/user',
   passport.authenticate('jwt', { session: false }),
   userRoute
 );
@@ -41,7 +43,12 @@ app.get('/', (req,res) => {
   res.sendFile(path.join(__dirname, './client-app/out/index.html'));
 });
 
+app.get('/api/countries.json', (req, res) => {
+  return res.sendFile(path.join(__dirname, './src/assets', 'countries.json'))
+})
 
 
-module.exports = app;
 
+app.listen(port, () => {
+    console.log(`Galaxy Node app is listening at http://${host}:${port}`)
+})
