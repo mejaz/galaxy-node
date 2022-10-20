@@ -11,7 +11,7 @@ const {name, username, password, host, port} = {
 const MONGO_URI = `mongodb://${username}:${password}@${host}:${port}/${name}?authSource=admin`
 
 exports.connect = () => {
-  mongoose.connect(MONGO_URI).then(() => {
+  mongoose.connect(MONGO_URI, {ignoreUndefined: true}).then(() => {
     console.log('Database connection successful')
   }).catch(err => {
     console.log(err)

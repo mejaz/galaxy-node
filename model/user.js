@@ -22,6 +22,14 @@ const GENDERS = [
 const Schema = mongoose.Schema;
 
 const UserSchema = new Schema({
+  empId: {
+    type: String,
+    required: [true, 'Employee Id is a required field.'],
+    trim: true,
+    unique: true,
+    maxLength: 10,
+    minLength: 3,
+  },
   firstName: {
     type: String,
     required: [true, 'First Name is a required field.'],
@@ -30,7 +38,7 @@ const UserSchema = new Schema({
     minLength: 3,
     validate: {
       validator: function (value) {
-        return validator.isAlpha(value)
+        return validator.isAlpha(value, 'en-US', {ignore: '\s'})  // ignore whitespaces
       },
       message: props => `${props.value} should be only alphabets`
     }
@@ -41,6 +49,12 @@ const UserSchema = new Schema({
     trim: true,
     maxLength: 50,
     minLength: 3,
+    validate: {
+      validator: function (value) {
+        return validator.isAlpha(value, 'en-US', {ignore: '\s'})  // ignore whitespaces
+      },
+      message: props => `${props.value} should be only alphabets`
+    }
   },
   gender: {
     type: String,
@@ -63,24 +77,23 @@ const UserSchema = new Schema({
     type: String,
     required: [true, 'Primary Mobile is a required field.'],
     trim: true,
-    maxLength: 13,
-    minLength: 13,
+    maxLength: [9, 'Enter 9 digit mobile number after +971'],
+    minLength: [9, 'Enter 9 digit mobile number after +971'],
     validate: {
       validator: function (value) {
-        return validator.isMobilePhone(value, 'ar-AE', {
-          strictMode: true
-        } )
+        return validator.isNumeric(value)
       },
-      message: props => `${props.value} should be only 13 chars`
+      message: props => `${props.value} should be only 10 chars`
     }
   },
   secondaryMobile: {
     type: String,
     trim: true,
-    maxLength: 14,
+    maxLength: [9, 'Enter 9 digit mobile number after +971'],
+    minLength: [9, 'Enter 9 digit mobile number after +971'],
     validate: {
       validator: function (value) {
-        return validator.isMobilePhone(value)
+        return value ? validator.isNumeric(value) : true
       },
       message: props => {
         console.log(props)
