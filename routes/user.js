@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const UserModel = require("../model/user")
 const AddressModel = require("../model/address")
-const {add} = require("nodemon/lib/rules");
+const generatePdf = require("../pdf/generate");
 
 router.get(
 	'/profile',
@@ -182,6 +182,23 @@ router.get(
 
 		let users = await UserModel.find({...filterOptions},)
 		return res.json(users)
+	}
+)
+
+router.post(
+	'/generate/:id',
+	async (req, res) => {
+		console.log(req.params.id)
+		console.log(req.body)
+
+		let result = generatePdf()
+		console.log("--result--", result)
+		if (result) {
+			console.log('success')
+		} else {
+			console.log('error')
+		}
+		return res.send()
 	}
 )
 
