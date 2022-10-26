@@ -89,8 +89,7 @@ const UserSchema = new Schema({
   secondaryMobile: {
     type: String,
     trim: true,
-    maxLength: [9, 'Enter 9 digit mobile number after +971'],
-    minLength: [9, 'Enter 9 digit mobile number after +971'],
+    required: false,
     validate: {
       validator: function (value) {
         return value ? validator.isNumeric(value) : true
@@ -175,6 +174,19 @@ UserSchema.methods.toJSON = function () {
   delete userObject.updatedAt
 
   return userObject
+}
+
+// get full name
+UserSchema.methods.fullName = function () {
+  const user = this
+  return `${user.firstName} ${user.lastName}`
+}
+
+// get full name with title
+UserSchema.methods.fullNameWithTitle = function () {
+  const user = this
+  let fullName = user.fullName()
+  return user.gender === 'M' ? `Mr. ${fullName}` : `Ms. ${fullName}`
 }
 
 const UserModel = mongoose.model('user', UserSchema);
