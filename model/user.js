@@ -145,6 +145,7 @@ const UserSchema = new Schema({
   }
 }, {
   timestamps: true,
+  strictPopulate: false
 });
 
 UserSchema.pre(

@@ -14,6 +14,7 @@ const port = process.env.APP_PORT
 // routes
 const loginSignupRoute = require('./routes/login-signup');
 const userRoute = require('./routes/user');
+const docsRoute = require('./routes/docs');
 
 // initiate the express app
 const app = express()
@@ -30,6 +31,13 @@ app.use(
   '/api/user',
   passport.authenticate('jwt', { session: false }),
   userRoute
+);
+
+// docs route
+app.use(
+  '/api/docs',
+  passport.authenticate('jwt', { session: false }),
+  docsRoute
 );
 
 // Handle errors.

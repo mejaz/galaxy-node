@@ -29,12 +29,12 @@ const CertsSchema = new Schema({
   },
   issuedTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'user',
     required: true,
   },
   issuedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'user',
     required: true,
   },
   issuedOn: {
@@ -51,6 +51,7 @@ const CertsSchema = new Schema({
   },
 }, {
   timestamps: true,
+  strictPopulate: false
 });
 
 CertsSchema.plugin(uniqueValidator, {
