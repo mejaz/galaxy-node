@@ -18,9 +18,8 @@ function prepareData({docNo, passportNo, formType, ...reqBody}, userObj, qrcode)
       salaryInAlpha: toTitleCase(converter.toWords(+reqBody.salary)),
       fullNameWithTitle: userObj.fullNameWithTitle(),
       doj: moment(userObj.doj).format("Do MMMM YYYY"),
-      // designation: userObj.designation,
+      designation: userObj.designation.name,
       nation: reqBody.passportCountry,
-      designation: "Procurement Manager",
       empId: userObj.empId,
       qrcode: qrcode,
     }

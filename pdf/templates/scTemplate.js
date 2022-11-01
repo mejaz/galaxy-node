@@ -1,8 +1,13 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
-function generateSC({
+async function generateSC({
                       docNo,
                       fullNameWithTitle,
                       designation,
@@ -28,7 +33,8 @@ function generateSC({
 
     // Pipe its output somewhere, like to a file or HTTP response
     // See below for browser usage
-    doc.pipe(fs.createWriteStream(`.${outputPath}`));
+    let writeStream = fs.createWriteStream(`.${outputPath}`)
+    doc.pipe(writeStream);
 
     doc.image('./pdf/logo.png', 425, 10, {width: 130})
     doc.moveDown(8)
@@ -186,7 +192,10 @@ function generateSC({
 
     // Finalize PDF file
     doc.end();
+
+    await new Promise((resolve) => writeStream.on('finish', () => resolve()))
     return true
+
   } catch (error) {
     console.log(error)
     return false

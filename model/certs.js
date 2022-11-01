@@ -19,6 +19,11 @@ const CertsSchema = new Schema({
     maxLength: 50,
     unique: true,
   },
+  fileName: {
+    type: String,
+    trim: true,
+    maxLength: 100,
+  },
   docType: {
     type: String,
     required: [true, 'Document Type is a required field.'],

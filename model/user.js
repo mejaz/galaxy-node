@@ -142,7 +142,12 @@ const UserSchema = new Schema({
   password: {
     type: String,
     required: false
-  }
+  },
+  designation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'designation',
+    required: true,
+  },
 }, {
   timestamps: true,
   strictPopulate: false

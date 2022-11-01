@@ -15,6 +15,7 @@ const port = process.env.APP_PORT
 const loginSignupRoute = require('./routes/login-signup');
 const userRoute = require('./routes/user');
 const docsRoute = require('./routes/docs');
+const dnsRoute = require('./routes/dns');
 
 // initiate the express app
 const app = express()
@@ -24,6 +25,7 @@ require('./auth/auth');
 app.use(express.json());
 // to serve the client app
 app.use(express.static(path.join(__dirname, './client-app/out')));
+// app.use(express.static(path.join(__dirname, './certificates')));
 // to access public routes
 app.use('/api', loginSignupRoute);
 // user route
@@ -38,6 +40,13 @@ app.use(
   '/api/docs',
   passport.authenticate('jwt', { session: false }),
   docsRoute
+);
+
+// designation route
+app.use(
+  '/api/designations',
+  passport.authenticate('jwt', { session: false }),
+  dnsRoute
 );
 
 // Handle errors.

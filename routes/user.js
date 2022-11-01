@@ -8,6 +8,8 @@ const {SALARY_CERTIFICATE_SHORT, CERTIFICATES_OBJ} = require("../src/constants")
 const CertsModel = require("../model/certs");
 const moment = require("moment");
 const path = require("path");
+const fs = require("fs");
+const DesignationModel = require("../model/designation");
 
 router.get(
   '/profile',
@@ -15,7 +17,6 @@ router.get(
     try {
       const {id} = req.query
       let responseObj = {}
-      console.log(id)
       let user = await UserModel.findOne({_id: id})
 
       if (!user) {
@@ -59,14 +60,20 @@ router.post(
   async (req, res) => {
     try {
       const {
-        empId, firstName, lastName, gender, dob, primaryMobile, secondaryMobile, email, doj,
+        empId, firstName, lastName, gender, dob, primaryMobile, secondaryMobile, email, doj, designation,
         localAddress, localCountry, localCity, permanentAddress, permanentCountry, permanentCity,
       } = req.body
+
+      const dns = await DesignationModel.findById(designation)
+
+      if (!dns) {
+        return res.status(400).json({message: "Invalid designation"})
+      }
 
       // save user details
       const user = new UserModel({
         empId, firstName, lastName, gender, primaryMobile, secondaryMobile,
-        dob, doj, email,
+        dob, doj, email, designation: dns
       })
 
       let userObj = await user.save()
@@ -124,10 +131,14 @@ router.post(
       delete req.body['isStaff']
       delete req.body['role']
 
-      console.log("--req.body--", req.body)
+      const dns = await DesignationModel.findById(req.body.designation)
+
+      if (!dns) {
+        return res.status(400).json({message: "Invalid designation"})
+      }
 
       // update user details
-      let user = await UserModel.findByIdAndUpdate(id, req.body,
+      let user = await UserModel.findByIdAndUpdate(id, {...req.body, designation: dns},
         {new: true})
 
       // update local address
@@ -198,7 +209,7 @@ router.post(
       const userId = req.params.id
       const {formType} = req.body
 
-      let userObj = await UserModel.findOne({_id: userId})
+      let userObj = await UserModel.findOne({_id: userId}).populate('designation')
 
       if (!userObj || !(formType in CERTIFICATES_OBJ)) {
         return res.status(400).send({message: "Invalid Request"})
@@ -226,11 +237,15 @@ router.post(
 
       if (dataForTemplate) {
         if (formType === SALARY_CERTIFICATE_SHORT) {
-          const result = generateSC(dataForTemplate, certPath)
+          const result = await generateSC(dataForTemplate, certPath)
           if (result) {
             cert.certUnsignedPath = certPath
+            cert.fileName = filename
             await cert.save()
-            return res.status(201).json({requestId: cert._id})
+
+            res.setHeader('Content-type', 'application/pdf')
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
+            return fs.createReadStream(`.${certPath}`).pipe(res);
           } else {
             await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
             return res.status(400).json({message: "Error generating pdf"})

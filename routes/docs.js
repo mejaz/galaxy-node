@@ -2,6 +2,7 @@ const express = require('express');
 const CertsModel = require("../model/certs");
 const UserModel = require("../model/user");
 const moment = require("moment");
+const fs = require("fs");
 const router = express.Router();
 // const {CERTIFICATES_OBJ, SALARY_CERTIFICATE_SHORT} = require("../src/constants");
 // const moment = require("moment");
@@ -30,7 +31,7 @@ router.get(
 
     certs = certs.map(cert => {
       return {
-        id: cert.id,
+        _id: cert.id,
         docNo: cert.docNo,
         docType: cert.docType,
         issuedTo: cert.issuedTo.fullName(),
@@ -88,8 +89,33 @@ router.get(
       //   }
       // })
 
-      console.log(cert)
       return res.json(cert)
+    } catch (error) {
+      return res.json({message: error.message})
+    }
+  }
+)
+
+router.get(
+  '/:id/download',
+  async (req, res) => {
+
+    try {
+      const {id} = req.params
+      const {signed} = req.query
+
+      let cert = await CertsModel.findOne({_id: id})
+
+      if (!cert) {
+        return res.status(400).json({message: "Invalid Request Number"})
+      }
+
+      res.setHeader('Content-type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename=${cert.fileName}`)
+
+      let certPath = signed === "true" ? cert.certSignedPath : cert.certUnsignedPath
+      return fs.createReadStream(`.${certPath}`).pipe(res);
+
     } catch (error) {
       return res.json({message: error.message})
     }
