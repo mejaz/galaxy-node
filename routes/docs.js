@@ -96,6 +96,25 @@ router.get(
   }
 )
 
+router.delete(
+  '/:id',
+  async (req, res) => {
+
+    try {
+      const {id} = req.params
+      let cert = await CertsModel.findByIdAndDelete(id)
+
+      if (!cert) {
+        return res.status(400).json({message: "Invalid Request Number"})
+      }
+
+      return res.send(cert)
+    } catch (error) {
+      return res.json({message: error.message})
+    }
+  }
+)
+
 router.get(
   '/:id/download',
   async (req, res) => {
