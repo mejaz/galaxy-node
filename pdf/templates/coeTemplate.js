@@ -1,6 +1,6 @@
 const generateBaseTemplate = require("./generateBaseTemplate");
 
-async function generateSC({
+async function generateCOE({
                             docNo,
                             fullNameWithTitle,
                             designation,
@@ -42,15 +42,15 @@ async function generateSC({
 
     doc.moveDown(2)
 
-    let salaryCertificateText = 'Salary Certificate'
+    let certificateText = 'Certificate of Experience'
     doc
       .font('./pdf/fonts/GOTHICB.TTF')
       .fontSize(12)
-      .text(`Subject: ${salaryCertificateText}`)
+      .text(`Subject: ${certificateText}`)
 
     doc
       .moveTo(68, 286)
-      .lineTo(68 + doc.widthOfString(salaryCertificateText), 286)
+      .lineTo(68 + doc.widthOfString(certificateText), 286)
       .stroke('#000000')
 
     doc.moveDown(2)
@@ -77,7 +77,7 @@ async function generateSC({
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
       .lineGap(7)
-      .text('This is to confirm that ', {
+      .text('This is to certify that ', {
         continued: true
       })
       .font('./pdf/fonts/GOTHICB.TTF')
@@ -85,45 +85,47 @@ async function generateSC({
         continued: true
       })
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(`, holding ${nation} Passport# ${passportNo}, is working with us since `, {
+      .text(`, was posted as a `, {
         continued: true
       })
       .font('./pdf/fonts/GOTHICB.TTF')
-      .text(doj, {continued: true})
+      .text(`${designation} `, {
+        continued: true
+      })
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(' in the capacity of a ', {continued: true})
+      .text(`in AIFI Technologies LLC from`, {
+        continued: true
+      })
       .font('./pdf/fonts/GOTHICB.TTF')
-      .text(`${designation}.`)
+      .text(` ${doj} `, {
+        continued: true
+      })
+      .font('./pdf/fonts/GOTHIC.TTF')
+      .text(`to `, {
+        continued: true
+      })
+      .font('./pdf/fonts/GOTHICB.TTF')
+      .text(`${doj}.`)
 
     doc.moveDown(1)
-
-    doc
-      .font('./pdf/fonts/GOTHICB.TTF')
-      .fontSize(12)
-      .text(fullNameWithTitle, {
-        continued: true
-      })
-      .font('./pdf/fonts/GOTHIC.TTF')
-      .text(' is drawing a monthly salary of ', {
-        continued: true
-      })
-      .font('./pdf/fonts/GOTHICB.TTF')
-      .text(`Dhs. ${salaryInDigits}`, {
-        continued: true
-      })
-      .font('./pdf/fonts/GOTHIC.TTF')
-      .text(` /- (UAE Dirham ${salaryInAlpha} Only).`);
-
-    doc.moveDown()
 
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
       .lineGap(7)
-      .text('This certificate is issued upon the employee’s request for ' +
-        'whatever purpose it may serve him/her best and the company holds ' +
-        'no liability for any commitment entered vide this certificate.');
+      .text('During his/her tenure, we have found that he/she is a dedicated performer. ' +
+        'He/She has carried out all of his/her obligations and responsibilities in a dignified manner. ' +
+        'He/She is constantly up for new challenges, and he/she has delivered great outcomes ' +
+        'in the majority of his/her projects. His/Her actions are responsible for our company’s major ' +
+        'accolades. He/She is constantly eager to acquire new talents and swiftly apply them.')
 
+    doc.moveDown(1)
+
+    doc
+      .font('./pdf/fonts/GOTHIC.TTF')
+      .fontSize(12)
+      .lineGap(7)
+      .text('We wish him/her all the luck in his/her future endeavors.')
 
     // Finalize PDF file
     doc.end();
@@ -138,4 +140,4 @@ async function generateSC({
 
 }
 
-module.exports = generateSC
+module.exports = generateCOE

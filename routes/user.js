@@ -4,7 +4,14 @@ const UserModel = require("../model/user")
 const AddressModel = require("../model/address")
 const {prepareData, generateQRCode} = require("../pdf/helper")
 const generateSC = require("../pdf/templates/scTemplate");
-const {SALARY_CERTIFICATE_SHORT, CERTIFICATES_OBJ} = require("../src/constants")
+const generateSTC = require("../pdf/templates/stcTemplate");
+const generateCOE = require("../pdf/templates/coeTemplate");
+const {
+  SALARY_CERTIFICATE_SHORT,
+  SALARY_TRANSFER_CERTIFICATE_SHORT,
+  EXPERIENCE_LETTER_SHORT,
+  CERTIFICATES_OBJ
+} = require("../src/constants")
 const CertsModel = require("../model/certs");
 const moment = require("moment");
 const path = require("path");
@@ -236,20 +243,27 @@ router.post(
       let dataForTemplate = prepareData(req.body, userObj, qrcode)
 
       if (dataForTemplate) {
+        let result;
         if (formType === SALARY_CERTIFICATE_SHORT) {
-          const result = await generateSC(dataForTemplate, certPath)
-          if (result) {
-            cert.certUnsignedPath = certPath
-            cert.fileName = filename
-            await cert.save()
+          result = await generateSC(dataForTemplate, certPath)
+        } else if (formType === SALARY_TRANSFER_CERTIFICATE_SHORT) {
+          console.log("--SALARY_TRANSFER_CERTIFICATE_SHORT--", SALARY_TRANSFER_CERTIFICATE_SHORT)
+          result = await generateSTC(dataForTemplate, certPath)
+        } else if (formType === EXPERIENCE_LETTER_SHORT) {
+          console.log("--EXPERIENCE_LETTER_SHORT--", EXPERIENCE_LETTER_SHORT)
+          result = await generateCOE(dataForTemplate, certPath)
+        }
+        if (result) {
+          cert.certUnsignedPath = certPath
+          cert.fileName = filename
+          await cert.save()
 
-            res.setHeader('Content-type', 'application/pdf')
-            res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
-            return fs.createReadStream(`.${certPath}`).pipe(res);
-          } else {
-            await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
-            return res.status(400).json({message: "Error generating pdf"})
-          }
+          res.setHeader('Content-type', 'application/pdf')
+          res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
+          return fs.createReadStream(`.${certPath}`).pipe(res);
+        } else {
+          await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
+          return res.status(400).json({message: "Error generating pdf"})
         }
       } else {
         return res.status(400).send({message: "Invalid Request, not all data provided"})
