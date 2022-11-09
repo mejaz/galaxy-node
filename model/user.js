@@ -115,14 +115,42 @@ const UserSchema = new Schema({
     required: true,
     validate: {
       validator: function (value) {
-        return validator.isDate(value) && new Date(value) < new Date();
+        return validator.isDate(value) && new Date(value) <= new Date();
       },
-      message: props => `${props.value} cannot be current/future date`
+      message: props => `${props.value} cannot be future date`
     }
+  },
+  lwd: {
+    type: Date,
+    validate: {
+      validator: function (value) {
+        return validator.isDate(value) && new Date(value) <= new Date();
+      },
+      message: props => `${props.value} cannot be future date`
+    }
+  },
+	nationality: {
+		type: String,
+		required: [true, 'Nationality is a required field.'],
+		trim: true,
+		maxLength: 5,
+		minLength: 1,
+	},
+  passNo: {
+    type: String,
+    required: [true, 'Passport No is a required field.'],
+    trim: true,
+    maxLength: 50,
+    minLength: 3,
   },
   isStaff: {
     type: Boolean,
     default: false,
+    required: true,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
     required: true,
   },
   email: {
