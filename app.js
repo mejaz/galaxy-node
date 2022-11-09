@@ -22,6 +22,10 @@ const app = express()
 
 // middlewares
 require('./auth/auth');
+const CertsModel = require("./model/certs");
+const mongoose = require("mongoose");
+const moment = require("moment");
+
 app.use(express.json());
 // to serve the client app
 app.use(express.static(path.join(__dirname, './client-app/out')));
@@ -31,32 +35,32 @@ app.use('/api', loginSignupRoute);
 // user route
 app.use(
   '/api/user',
-  passport.authenticate('jwt', { session: false }),
+  passport.authenticate('jwt', {session: false}),
   userRoute
 );
 
 // docs route
 app.use(
   '/api/docs',
-  passport.authenticate('jwt', { session: false }),
+  passport.authenticate('jwt', {session: false}),
   docsRoute
 );
 
 // designation route
 app.use(
   '/api/designations',
-  passport.authenticate('jwt', { session: false }),
+  passport.authenticate('jwt', {session: false}),
   dnsRoute
 );
 
 // Handle errors.
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   console.log(err)
   res.status(err.status || 500);
-  res.json({ error: err });
+  res.json({error: err});
 });
 
-app.get('/', (req,res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, './client-app/out/index.html'));
 });
 
@@ -65,7 +69,32 @@ app.get('/api/countries.json', (req, res) => {
 })
 
 
+app.post(
+  '/api/public/docs/:id/verify',
+  async (req, res) => {
+    const {lastName, dob} = req.body
+    const {id} = req.params
+
+    let cert = mongoose.isValidObjectId(id) ? await CertsModel.findById(id).populate('issuedTo') : null
+
+    if (!cert) {
+      return res.status(400).json({success: false, message: 'invalid request'})
+    }
+
+    if (cert.issuedTo.lastName.toLowerCase() === lastName.toLowerCase()
+      && moment(cert.issuedTo.dob).format("MMDDYYYY") === moment(dob).format("MMDDYYYY")) {
+      if (cert.certSignedPath) {
+        return res.status(201).sendFile(path.join(__dirname,`${cert.certSignedPath}`))
+      } else {
+        return res.status(400).json({success: false, message: 'signed document not available'})
+      }
+    } else {
+      return res.status(400).json({success: false, message: 'invalid request'})
+    }
+  }
+)
+
 
 app.listen(port, () => {
-    console.log(`Galaxy Node app is listening at http://${host}:${port}`)
+  console.log(`Galaxy Node app is listening at http://${host}:${port}`)
 })

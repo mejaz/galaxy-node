@@ -1,5 +1,5 @@
-
 const mongoose = require('mongoose');
+const {Types: {ObjectId}} = mongoose;
 
 const {name, username, password, host, port} = {
   name: process.env.DB_NAME,
@@ -17,4 +17,17 @@ exports.connect = () => {
     console.log(err)
     console.error('Database connection error')
   })
+
+  //Helper to check if an ID is an object ID
+  mongoose.isObjectId = function (id) {
+    return (id instanceof ObjectId);
+  };
+
+//Helper to validate a string as object ID
+  mongoose.isValidObjectId = function (str) {
+    if (typeof str !== 'string') {
+      return false;
+    }
+    return str.match(/^[a-f\d]{24}$/i);
+  };
 }

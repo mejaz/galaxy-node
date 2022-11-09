@@ -23,7 +23,7 @@ router.post(
       const {newDesignation} = req.body
 
       if(newDesignation.trim().length === 0) {
-        return res.status(400).send({message: "Invalid Designation"})
+        return res.status(400).json({message: "Invalid Designation"})
       }
 
       let dns = new DesignationModel({
@@ -32,7 +32,7 @@ router.post(
 
       dns = await dns.save()
 
-      return res.json(dns)
+      return res.status(201).json({success: true, message: `Designation "${dns.name}" successfully added`})
     } catch (error) {
       return res.status(400).json({message: error.message})
     }
@@ -52,7 +52,7 @@ router.delete(
 
       let dns = await DesignationModel.findByIdAndDelete(id)
 
-      return res.json(dns)
+      return res.status(202).json({success: true, message: `Designation "${dns.name}" successfully deleted`})
     } catch (error) {
       return res.status(400).json({message: error.message})
     }

@@ -238,7 +238,7 @@ router.post(
       let certPath = path.join("/certificates", formType.toLowerCase(), filename)
 
       // qrcode url
-      let qrcodeUrl = `${req.protocol}:\//${req.get('host')}/emp/certs/view/${cert._id}`;
+      let qrcodeUrl = `${req.protocol}:\//${req.get('host')}/docs/view/${cert._id}`;
       let qrcode = await generateQRCode({certificateUrl: qrcodeUrl})
       let dataForTemplate = prepareData(req.body, userObj, qrcode)
 
