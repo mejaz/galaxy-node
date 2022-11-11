@@ -75,37 +75,48 @@ const UserSchema = new Schema({
   },
   primaryMobile: {
     type: String,
-    required: [true, 'Primary Mobile is a required field.'],
+    required: false,
     trim: true,
-    maxLength: [9, 'Enter 9 digit mobile number after +971'],
-    minLength: [9, 'Enter 9 digit mobile number after +971'],
-    validate: {
-      validator: function (value) {
-        return validator.isNumeric(value)
+    validate: [
+      {
+        validator: function (value) {
+          return value ? validator.isNumeric(value) : true
+        },
+        message: props => `${props.value} should be only 9 chars after +971`
       },
-      message: props => `${props.value} should be only 10 chars`
-    }
+      {
+        validator: function (value) {
+          return value ? value.length === 9 : true
+        },
+        message: props => `${props.value} should be only 9 chars after +971`
+      },
+    ]
   },
   secondaryMobile: {
     type: String,
     trim: true,
     required: false,
-    validate: {
-      validator: function (value) {
-        return value ? validator.isNumeric(value) : true
+    validate: [
+      {
+        validator: function (value) {
+          return value ? validator.isNumeric(value) : true
+        },
+        message: props => `${props.value} should be only 9 chars after +971`
       },
-      message: props => {
-        console.log(props)
-        return `${props}`
-      }
-    }
+      {
+        validator: function (value) {
+          return value ? value.length === 9 : true
+        },
+        message: props => `${props.value} should be only 9 chars after +971`
+      },
+    ]
   },
   dob: {
     type: Date,
-    required: true,
+    required: false,
     validate: {
       validator: function (value) {
-        return validator.isDate(value) && new Date(value) < new Date();
+        return value ? validator.isDate(value) && new Date(value) < new Date(): true;
       },
       message: props => `${props.value} cannot be current/future date`
     }
@@ -129,13 +140,13 @@ const UserSchema = new Schema({
       message: props => `${props.value} cannot be future date`
     }
   },
-	nationality: {
-		type: String,
-		required: [true, 'Nationality is a required field.'],
-		trim: true,
-		maxLength: 5,
-		minLength: 1,
-	},
+  nationality: {
+    type: String,
+    required: [true, 'Nationality is a required field.'],
+    trim: true,
+    maxLength: 5,
+    minLength: 1,
+  },
   passNo: {
     type: String,
     required: [true, 'Passport No is a required field.'],
@@ -155,17 +166,21 @@ const UserSchema = new Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: false,
     lowercase: true,
     trim: true,
-    unique: true,
     maxLength: 100,
+    index: {
+      unique: true,
+      partialFilterExpression: {email: {$type: "string"}}
+    },
     validate: {
-      validator: function(value) {
-        return validator.isEmail(value)
+      validator: function (value) {
+        return value ? validator.isEmail(value) : true
       },
       message: props => `${props.value} is not a valid email`
-    }
+    },
+    default: null
   },
   password: {
     type: String,
@@ -181,9 +196,10 @@ const UserSchema = new Schema({
   strictPopulate: false
 });
 
+
 UserSchema.pre(
   'save',
-  async function(next) {
+  async function (next) {
     const user = this;
     if (this.password) {
       this.password = await bcrypt.hash(this.password, 10);
@@ -193,7 +209,7 @@ UserSchema.pre(
   }
 );
 
-UserSchema.methods.isValidPassword = async function(password) {
+UserSchema.methods.isValidPassword = async function (password) {
   const user = this;
   return await bcrypt.compare(password, user.password);
 }

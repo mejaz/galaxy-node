@@ -2,7 +2,7 @@ const generateBaseTemplate = require("./generateBaseTemplate");
 
 async function generateSTC(
   {
-    docNo, fullNameWithTitle, designation, todayDate, doj, empId, passportNo,
+    docNo, fullNameWithTitle, designation, todayDate, doj, passportNo,
     salaryInDigits, salaryInAlpha, nation, qrcode, accNo, iban,
   }, outputPath) {
   try {

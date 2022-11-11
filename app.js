@@ -72,7 +72,7 @@ app.get('/api/countries.json', (req, res) => {
 app.post(
   '/api/public/docs/:id/verify',
   async (req, res) => {
-    const {lastName, dob} = req.body
+    const {lastName, empId} = req.body
     const {id} = req.params
 
     let cert = mongoose.isValidObjectId(id) ? await CertsModel.findById(id).populate('issuedTo') : null
@@ -82,7 +82,7 @@ app.post(
     }
 
     if (cert.issuedTo.lastName.toLowerCase() === lastName.toLowerCase()
-      && moment(cert.issuedTo.dob).format("MMDDYYYY") === moment(dob).format("MMDDYYYY")) {
+      && cert.issuedTo.empId.toLowerCase() === empId.toLowerCase()) {
       if (cert.certSignedPath) {
         return res.status(201).sendFile(path.join(__dirname,`${cert.certSignedPath}`))
       } else {

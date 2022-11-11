@@ -1,6 +1,7 @@
 const converter = require('number-to-words');
 const moment = require("moment");
 const QRCode = require('qrcode')
+const nationalities = require("i18n-nationality");
 const {
   SALARY_CERTIFICATE_SHORT,
   SALARY_TRANSFER_CERTIFICATE_SHORT,
@@ -14,42 +15,49 @@ const generateQRCode = async ({certificateUrl}) => {
   return QRCode.toDataURL(certificateUrl, {color: {dark: "#f88f00"}});
 }
 
-function prepareData({docNo, passportNo, formType, ...reqBody}, userObj, qrcode) {
-  let finalData = {docNo, passportNo, todayDate: moment().format("Do MMMM YYYY"),}
+function prepareData({docNo, formType, ...reqBody}, employee, qrcode) {
+  const todayDate = moment().format("Do MMMM YYYY")
+  let finalData = {
+    docNo,
+    passportNo: employee.passNo,
+    todayDate,
+  }
 
   if (formType === SALARY_CERTIFICATE_SHORT) {
+    const salary = reqBody['salary']
     return {
       ...finalData,
-      salaryInDigits: reqBody.salary,
-      salaryInAlpha: toTitleCase(converter.toWords(+reqBody.salary)),
-      fullNameWithTitle: userObj.fullNameWithTitle(),
-      doj: moment(userObj.doj).format("Do MMMM YYYY"),
-      designation: userObj.designation.name,
-      nation: reqBody.passportCountry,
-      empId: userObj.empId,
+      salaryInDigits: salary,
+      salaryInAlpha: toTitleCase(converter.toWords(+salary)),
+      fullNameWithTitle: employee.fullNameWithTitle(),
+      doj: moment(employee.doj).format("Do MMMM YYYY"),
+      designation: employee.designation.name,
+      nation: nationalities.getName(employee.nationality, 'en'),
+      empId: employee.empId,
       qrcode: qrcode,
     }
   } else if (formType === SALARY_TRANSFER_CERTIFICATE_SHORT) {
+    const salary = reqBody['salary']
     return {
       ...finalData,
-      salaryInDigits: reqBody.salary,
-      salaryInAlpha: toTitleCase(converter.toWords(+reqBody.salary)),
-      fullNameWithTitle: userObj.fullNameWithTitle(),
-      doj: moment(userObj.doj).format("Do MMMM YYYY"),
-      designation: userObj.designation.name,
-      nation: reqBody.passportCountry,
+      salaryInDigits: salary,
+      salaryInAlpha: toTitleCase(converter.toWords(+salary)),
+      fullNameWithTitle: employee.fullNameWithTitle(),
+      doj: moment(employee.doj).format("Do MMMM YYYY"),
+      designation: employee.designation.name,
+      nation: nationalities.getName(employee.nationality, 'en'),
       accNo: reqBody.accNo,
       iban: reqBody.iban,
-      empId: userObj.empId,
       qrcode: qrcode,
     }
   } else if (formType === EXPERIENCE_LETTER_SHORT) {
     return {
       ...finalData,
-      fullNameWithTitle: userObj.fullNameWithTitle(),
-      doj: moment(userObj.doj).format("Do MMMM YYYY"),
-      designation: userObj.designation.name,
-      empId: userObj.empId,
+      fullNameWithTitle: employee.fullNameWithTitle(),
+      doj: moment(employee.doj).format("Do MMMM YYYY"),
+      lwd: moment(employee.lwd).format("Do MMMM YYYY"),
+      designation: employee.designation.name,
+      empId: employee.empId,
       qrcode: qrcode,
     }
   }

@@ -13,24 +13,21 @@ const Schema = mongoose.Schema;
 const AddressSchema = new Schema({
 	streetAddress: {
 		type: String,
-		required: [true, 'Street Address is a required field.'],
+		required: false,
 		trim: true,
 		maxLength: 100,
-		minLength: 3,
 	},
 	country: {
 		type: String,
-		required: [true, 'Country is a required field.'],
+		required: false,
 		trim: true,
 		maxLength: 5,
-		minLength: 1,
 	},
 	city: {
 		type: String,
-		required: [true, 'City is a required field.'],
+		required: false,
 		trim: true,
 		maxLength: 5,
-		minLength: 1,
 	},
 	addressType: {
 		type: String,

@@ -6,6 +6,7 @@ async function generateCOE({
                             designation,
                             todayDate,
                             doj,
+                            lwd,
                             empId,
                             passportNo,
                             salaryInDigits,
@@ -105,7 +106,7 @@ async function generateCOE({
         continued: true
       })
       .font('./pdf/fonts/GOTHICB.TTF')
-      .text(`${doj}.`)
+      .text(`${lwd}.`)
 
     doc.moveDown(1)
 
