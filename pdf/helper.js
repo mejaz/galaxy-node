@@ -4,7 +4,7 @@ const QRCode = require('qrcode')
 const nationalities = require("i18n-nationality");
 const {
   SALARY_CERTIFICATE_SHORT,
-  SALARY_TRANSFER_CERTIFICATE_SHORT,
+  SALARY_TRANSFER_LETTER_SHORT,
   EXPERIENCE_LETTER_SHORT,
   CERTIFICATES_OBJ
 } = require("../src/constants")
@@ -36,7 +36,7 @@ function prepareData({docNo, formType, ...reqBody}, employee, qrcode) {
       empId: employee.empId,
       qrcode: qrcode,
     }
-  } else if (formType === SALARY_TRANSFER_CERTIFICATE_SHORT) {
+  } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
     const salary = reqBody['salary']
     return {
       ...finalData,

@@ -9,7 +9,7 @@ const generateCOE = require("../pdf/templates/coeTemplate");
 const nationalities = require("i18n-nationality");
 const {
   SALARY_CERTIFICATE_SHORT,
-  SALARY_TRANSFER_CERTIFICATE_SHORT,
+  SALARY_TRANSFER_LETTER_SHORT,
   EXPERIENCE_LETTER_SHORT,
   CERTIFICATES_OBJ
 } = require("../src/constants")
@@ -252,6 +252,10 @@ router.post(
         return res.status(400).json({success: false, message: "Invalid Request"})
       }
 
+      if (employee.isActive && formType === EXPERIENCE_LETTER_SHORT) {
+        return res.status(400).json({success: false, message: "Employee still active, cannot generate Experience Letter."})
+      }
+
       // make an entry into certificates table
       let todayDate = new Date()
 
@@ -268,7 +272,10 @@ router.post(
 
       // TODO check if directory exist
 
-      let certPath = path.join("/certificates", formType.toLowerCase(), filename)
+      let dirPath = `certificates/${formType.toLowerCase()}`
+      !fs.existsSync(dirPath) && fs.mkdirSync(dirPath);
+      let certPath = path.join(dirPath, filename)
+      console.log("certPath", certPath)
 
       // qrcode url
       let qrcodeUrl = `${req.protocol}:\//${req.get('host')}/docs/view/${cert._id}`;
@@ -279,8 +286,8 @@ router.post(
         let result;
         if (formType === SALARY_CERTIFICATE_SHORT) {
           result = await generateSC(dataForTemplate, certPath)
-        } else if (formType === SALARY_TRANSFER_CERTIFICATE_SHORT) {
-          console.log("--SALARY_TRANSFER_CERTIFICATE_SHORT--", SALARY_TRANSFER_CERTIFICATE_SHORT)
+        } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
+          console.log("--SALARY_TRANSFER_LETTER_SHORT--", SALARY_TRANSFER_LETTER_SHORT)
           result = await generateSTC(dataForTemplate, certPath)
         } else if (formType === EXPERIENCE_LETTER_SHORT) {
           console.log("--EXPERIENCE_LETTER_SHORT--", EXPERIENCE_LETTER_SHORT)
@@ -294,7 +301,7 @@ router.post(
           res.setHeader('Content-type', 'application/pdf')
           res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
           res.setHeader('requestId', `${cert._id}`)
-          return fs.createReadStream(`.${certPath}`).pipe(res);
+          return fs.createReadStream(certPath).pipe(res);
         } else {
           await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
           return res.status(400).json({message: "Error generating pdf"})

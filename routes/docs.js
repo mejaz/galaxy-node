@@ -30,7 +30,7 @@ const storage = multer.diskStorage({
     } else {
       let todayDate = new Date()
       let fileName = `${req.docType.toUpperCase()}_${cert.issuedTo.empId}_${cert._id}_${moment(todayDate).format("DDMMYYYY")}_SIGNED.pdf`
-      cert.certSignedPath = `/${req.dirLoc}${fileName}`
+      cert.certSignedPath = `${req.dirLoc}${fileName}`
       cert = await cert.save()
       req.cert = cert
 
@@ -77,7 +77,7 @@ router.get(
         docType: cert.docType,
         issuedTo: cert.issuedTo.fullName(),
         issuedBy: cert.issuedBy.fullName(),
-        issuedOn: moment(cert.issuedOn).format("DD-MMM-YYYY"),
+        issuedOn: cert.issuedOn,
         isSignedUploaded: !!cert.certSignedPath,
       }
     })
@@ -176,7 +176,7 @@ router.get(
       res.setHeader('Content-type', 'application/pdf')
       res.setHeader('Content-Disposition', `attachment; filename=${fileName}`)
 
-      return fs.createReadStream(`.${certPath}`).pipe(res);
+      return fs.createReadStream(certPath).pipe(res);
 
     } catch (error) {
       return res.json({message: error.message})

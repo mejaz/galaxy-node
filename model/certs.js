@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 const validator = require('validator')
-const {SALARY_CERTIFICATE, SALARY_TRANSFER_CERTIFICATE, EXPERIENCE_LETTER} = require("../src/constants")
+const {SALARY_CERTIFICATE, SALARY_TRANSFER_LETTER, EXPERIENCE_LETTER} = require("../src/constants")
 const uniqueValidator = require('mongoose-unique-validator');
 
 const CERTIFICATES = [
   SALARY_CERTIFICATE,
-  SALARY_TRANSFER_CERTIFICATE,
+  SALARY_TRANSFER_LETTER,
   EXPERIENCE_LETTER,
 ]
 

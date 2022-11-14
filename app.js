@@ -84,7 +84,7 @@ app.post(
     if (cert.issuedTo.lastName.toLowerCase() === lastName.toLowerCase()
       && cert.issuedTo.empId.toLowerCase() === empId.toLowerCase()) {
       if (cert.certSignedPath) {
-        return res.status(201).sendFile(path.join(__dirname,`${cert.certSignedPath}`))
+        return res.status(201).sendFile(path.join(__dirname, cert.certSignedPath))
       } else {
         return res.status(400).json({success: false, message: 'signed document not available'})
       }

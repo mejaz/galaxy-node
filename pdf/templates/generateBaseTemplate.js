@@ -16,7 +16,7 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
     const doc = new PDFDocument({size: 'A4', margins: MARGINS});
 
     // Pipe its output somewhere, like to a file or HTTP response
-    let writeStream = fs.createWriteStream(`.${outputPath}`)
+    let writeStream = fs.createWriteStream(`./${outputPath}`)
     doc.pipe(writeStream);
 
     doc.image(AIFI_LOGO, 440, 0, {width: 130})
@@ -49,9 +49,9 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text('Yours sincerely,', 18, 665);
+      .text('Yours sincerely,', 18, 650);
 
-    doc.moveDown(3)
+    doc.moveDown(5)
 
 
     doc
@@ -76,12 +76,12 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
       .image(AIFI_LOGO, 87, 802, {width: 20})
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(9)
-      .text('AIFI Technologies LLC • Street 9, Villa 13, Khalifa City A, Abu Dhabi, U.A.E • P.O. Box: 53543', 107, 810,);
+      .text('AIFI Technologies LLC • Office Unit 1-8, Masdar City, Abu Dhabi, U.A.E • P.O. Box: 53543', 107, 810,);
 
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(9)
-      .text(' Tel: (+971) 2 627 4379 • email: info@aifitechnologies.com', 170, 825,);
+      .text(' Tel: (+971) 2 628 2583 • email: info@aifitechnologies.com', 170, 825,);
 
     return {
       writeStream,
