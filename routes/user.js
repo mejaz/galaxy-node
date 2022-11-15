@@ -220,17 +220,23 @@ router.post(
 router.get(
   '/search',
   async (req, res) => {
-    const {pageSize, pageNo, ...filterOptions} = req.query
+    const {pageSize, pageNo, empId, mobNo, ...nameParts} = req.query
 
-    for (const item in filterOptions) {
-      if (filterOptions[item] === "") {
-        delete filterOptions[item]
-      } else {
-        if (item !== 'empId') {
-          let itemVal = filterOptions[item]
-          filterOptions[item] = {'$regex': itemVal, '$options': 'i'}
-        }
+    let filterOptions = {}
+
+    if (empId) {
+      filterOptions["empId"] = empId
+    } else if (mobNo) {
+      // searching only with the last 9 chars or less
+      filterOptions["primaryMobile"] = mobNo.length <= 9 ? mobNo : mobNo.slice(-9)
+    } else {
+      let orFilters = []
+      for (const item in nameParts) {
+        let itemVal = nameParts[item]
+        filterOptions[item] = {'$regex': itemVal, '$options': 'i'}
+        orFilters.push({[item]: {'$regex': itemVal, '$options': 'i'}})
       }
+      filterOptions["$or"] = orFilters
     }
 
     let users = await UserModel.find({...filterOptions},)
@@ -253,7 +259,10 @@ router.post(
       }
 
       if (employee.isActive && formType === EXPERIENCE_LETTER_SHORT) {
-        return res.status(400).json({success: false, message: "Employee still active, cannot generate Experience Letter."})
+        return res.status(400).json({
+          success: false,
+          message: "Employee still active, cannot generate Experience Letter."
+        })
       }
 
       // make an entry into certificates table
@@ -270,12 +279,9 @@ router.post(
       cert = await cert.save()
       let filename = `${formType}_${employee.empId}_${employee.fullName()}_${moment(todayDate).format("DDMMYYYY-HHMMSS")}_UNSIGNED.pdf`
 
-      // TODO check if directory exist
-
       let dirPath = `certificates/${formType.toLowerCase()}`
       !fs.existsSync(dirPath) && fs.mkdirSync(dirPath);
       let certPath = path.join(dirPath, filename)
-      console.log("certPath", certPath)
 
       // qrcode url
       let qrcodeUrl = `${req.protocol}:\//${req.get('host')}/docs/view/${cert._id}`;
@@ -287,10 +293,8 @@ router.post(
         if (formType === SALARY_CERTIFICATE_SHORT) {
           result = await generateSC(dataForTemplate, certPath)
         } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
-          console.log("--SALARY_TRANSFER_LETTER_SHORT--", SALARY_TRANSFER_LETTER_SHORT)
           result = await generateSTC(dataForTemplate, certPath)
         } else if (formType === EXPERIENCE_LETTER_SHORT) {
-          console.log("--EXPERIENCE_LETTER_SHORT--", EXPERIENCE_LETTER_SHORT)
           result = await generateCOE(dataForTemplate, certPath)
         }
         if (result) {
