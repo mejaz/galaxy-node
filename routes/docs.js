@@ -6,12 +6,6 @@ const fs = require("fs");
 const router = express.Router();
 const multer = require("multer");
 const {CERTIFICATES_SHORT_OBJ} = require("../src/constants")
-// const {CERTIFICATES_OBJ, SALARY_CERTIFICATE_SHORT} = require("../src/constants");
-// const moment = require("moment");
-// const path = require("path");
-// const {generateQRCode, prepareData} = require("../pdf/helper");
-// const generateSC = require("../pdf/templates/scTemplate");
-// const express = require("express");
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -53,55 +47,44 @@ const fileFilter = async (req, file, callback) => {
 const upload = multer({storage, fileFilter}).single("file");
 
 
+const serializeCerts = (certs) => certs.map(cert => {
+  return {
+    _id: cert.id,
+    docNo: cert.docNo,
+    docType: cert.docType,
+    issuedTo: cert.issuedTo.fullName(),
+    issuedBy: cert.issuedBy.lastName,
+    issuedOn: cert.issuedOn,
+    isSignedUploaded: !!cert.certSignedPath,
+  }
+})
+
 router.get(
   '/search',
   async (req, res) => {
-    const {pageSize, pageNo, ...rest} = req.query
+    const {pageSize, pageNo, docNo, empId, lastName} = req.query
+    let certs = []
+    if (docNo) {
 
-    // let userIds = await UserModel.find({lastName: {'$regex': rest.lastName, '$options': 'i'}}, {_id: 1})
-    // userIds = userIds.map(obj => obj._id)
-    // console.log(userIds)
+      certs = await CertsModel.find({docNo}).populate('issuedTo issuedBy')
+      certs = serializeCerts(certs)
 
-    let filterOptions = {
-      docNo: rest.docNo,
-      // empId: rest.empId,
-      // "issuedTo.lastName": {'$regex': rest.lastName, '$options': 'i'}
-    }
+    } else if (empId) {
 
-    let certs = await CertsModel.find(filterOptions).populate('issuedTo issuedBy')
-
-    certs = certs.map(cert => {
-      return {
-        _id: cert.id,
-        docNo: cert.docNo,
-        docType: cert.docType,
-        issuedTo: cert.issuedTo.fullName(),
-        issuedBy: cert.issuedBy.fullName(),
-        issuedOn: cert.issuedOn,
-        isSignedUploaded: !!cert.certSignedPath,
+      let issuedTo = await UserModel.findOne({empId})
+      if (!issuedTo) {
+        return res.json([])
       }
-    })
+      certs = await CertsModel.find({issuedTo}).sort("-issuedOn").populate('issuedTo issuedBy')
+      certs = serializeCerts(certs)
 
-    // let certs = await CertsModel.find({issuedTo: {$in: userIds}},)
-    console.log(certs)
-    //
-    // if(rest.lastName) {
-    //   // add
-    // }
+    } else if (lastName) {
+      let users = await UserModel.find({lastName: {'$regex': lastName, '$options': 'i'}})
+      let userIds = users.map(obj => obj._id)
 
-    // let docs = await CertsModel.aggregate([
-    //   {
-    //     $lookup: {
-    //       from: 'user',
-    //       localField: 'issuedBy',
-    //       foreignField: '_id',
-    //       as: 'cert_docs',
-    //     }},
-    //     // { "$unwind": "$cert_docs" }
-    // ])
-    //
-    // console.log(docs.length)
-
+      certs = await CertsModel.find({issuedTo: {$in: userIds}}).populate('issuedTo issuedBy')
+      certs = serializeCerts(certs)
+    }
     return res.json(certs)
   }
 )
@@ -117,19 +100,6 @@ router.get(
       if (!cert) {
         return res.status(400).json({message: "Invalid Request Number"})
       }
-
-      // certs = certs.map(cert => {
-      //   return {
-      //     id: cert.id,
-      //     docNo: cert.docNo,
-      //     docType: cert.docType,
-      //     issuedTo: cert.issuedTo.fullName(),
-      //     issuedBy: cert.issuedBy.fullName(),
-      //     issuedOn: moment(cert.issuedOn).format("DD-MMM-YYYY"),
-      //     isSignedUploaded: !!cert.certSignedPath,
-      //   }
-      // })
-
       return res.json(cert)
     } catch (error) {
       return res.json({message: error.message})

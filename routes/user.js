@@ -199,16 +199,6 @@ router.post(
       let obj = user.toObject()
       delete obj['password']
 
-      obj = {
-        ...obj,
-        localAddress: localAdd.streetAddress,
-        localCountry: localAdd.country,
-        localCity: localAdd.city,
-        permanentAddress: permAdd.streetAddress,
-        permanentCountry: permAdd.country,
-        permanentCity: permAdd.city,
-      }
-
       return res.status(201).json({success: true, message: 'For submitted successfully!'})
     } catch (error) {
       console.log('--error--', error)
@@ -221,7 +211,6 @@ router.get(
   '/search',
   async (req, res) => {
     const {pageSize, pageNo, empId, mobNo, ...nameParts} = req.query
-
     let filterOptions = {}
 
     if (empId) {
@@ -233,13 +222,12 @@ router.get(
       let orFilters = []
       for (const item in nameParts) {
         let itemVal = nameParts[item]
-        filterOptions[item] = {'$regex': itemVal, '$options': 'i'}
-        orFilters.push({[item]: {'$regex': itemVal, '$options': 'i'}})
+        if (itemVal) orFilters.push({[item]: {'$regex': itemVal, '$options': 'i'}})
       }
       filterOptions["$or"] = orFilters
     }
 
-    let users = await UserModel.find({...filterOptions},)
+    let users = await UserModel.find(filterOptions)
     return res.json(users)
   }
 )
