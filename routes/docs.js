@@ -5,7 +5,7 @@ const moment = require("moment");
 const fs = require("fs");
 const router = express.Router();
 const multer = require("multer");
-const {CERTIFICATES_SHORT_OBJ} = require("../src/constants")
+const {CERTIFICATES_SHORT_OBJ, CERTIFICATES_OBJ} = require("../src/constants")
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -60,32 +60,98 @@ const serializeCerts = (certs) => certs.map(cert => {
 })
 
 router.get(
+  '/types',
+  async (req, res) => {
+    try {
+      const docTypes = []
+      for (const item in CERTIFICATES_OBJ) {
+        docTypes.push({
+          key: item,
+          label: CERTIFICATES_OBJ[item]
+        })
+      }
+      return res.json(docTypes)
+    } catch (error) {
+      return res.json({message: error.message})
+    }
+  }
+)
+
+router.get(
   '/search',
   async (req, res) => {
-    const {pageSize, pageNo, docNo, empId, lastName} = req.query
-    let certs = []
-    if (docNo) {
+    const {rowsPerPage, page, docType, docNo, empId, lastName} = req.query
+    let result
 
-      certs = await CertsModel.find({docNo}).populate('issuedTo issuedBy')
-      certs = serializeCerts(certs)
+    const skip = +page * +rowsPerPage
+    const limit = +rowsPerPage
+
+    let defaultFilterOptions = {}
+
+    if (docType) {
+      defaultFilterOptions["docType"] = CERTIFICATES_OBJ[docType]
+    }
+
+    if (docNo) {
+      const filterOpts = {docNo, ...defaultFilterOptions}
+      const count = await CertsModel.countDocuments({...filterOpts})
+      let certs = await CertsModel.find({...filterOpts})
+        .skip(skip)
+        .limit(limit)
+        .populate('issuedTo issuedBy')
+      result = {
+        count,
+        rows: serializeCerts(certs)
+      }
 
     } else if (empId) {
-
       let issuedTo = await UserModel.findOne({empId})
       if (!issuedTo) {
         return res.json([])
       }
-      certs = await CertsModel.find({issuedTo}).sort("-issuedOn").populate('issuedTo issuedBy')
-      certs = serializeCerts(certs)
 
+      const filterOpts = {issuedTo, ...defaultFilterOptions}
+      const count = await CertsModel.countDocuments({...filterOpts})
+      let certs = await CertsModel
+        .find({...filterOpts})
+        .skip(skip)
+        .limit(limit)
+        .sort("-issuedOn")
+        .populate('issuedTo issuedBy')
+      result = {
+        count,
+        rows: serializeCerts(certs)
+      }
     } else if (lastName) {
       let users = await UserModel.find({lastName: {'$regex': lastName, '$options': 'i'}})
       let userIds = users.map(obj => obj._id)
 
-      certs = await CertsModel.find({issuedTo: {$in: userIds}}).populate('issuedTo issuedBy')
-      certs = serializeCerts(certs)
+      const filterOpts = {issuedTo: {$in: userIds}, ...defaultFilterOptions}
+      const count = await CertsModel.countDocuments({...filterOpts})
+      let certs = await CertsModel
+        .find({...filterOpts})
+        .skip(skip)
+        .limit(limit)
+        .populate('issuedTo issuedBy')
+      result = {
+        count,
+        rows: serializeCerts(certs)
+      }
+    } else {
+      const filterOpts = {...defaultFilterOptions}
+      const count = await CertsModel.countDocuments({...filterOpts})
+      let certs = await CertsModel
+        .find({...filterOpts})
+        .skip(skip)
+        .limit(limit)
+        .sort("-issuedOn")
+        .populate('issuedTo issuedBy')
+      result = {
+        count,
+        rows: serializeCerts(certs)
+      }
     }
-    return res.json(certs)
+    return res.json(result)
   }
 )
 

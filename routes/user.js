@@ -210,7 +210,11 @@ router.post(
 router.get(
   '/search',
   async (req, res) => {
-    const {pageSize, pageNo, empId, mobNo, ...nameParts} = req.query
+    const {rowsPerPage, page, empId, mobNo, ...nameParts} = req.query
+
+    const skip = +page * +rowsPerPage
+    const limit = +rowsPerPage
+
     let filterOptions = {}
 
     if (empId) {
@@ -227,8 +231,10 @@ router.get(
       filterOptions["$or"] = orFilters
     }
 
-    let users = await UserModel.find(filterOptions)
-    return res.json(users)
+    let count = await UserModel.countDocuments(filterOptions)
+    let rows = await UserModel.find(filterOptions).skip(skip).limit(limit).sort("-createdAt")
+
+    return res.json({count, rows})
   }
 )
 
