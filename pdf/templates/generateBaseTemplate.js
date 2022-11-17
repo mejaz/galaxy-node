@@ -36,8 +36,6 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
       x: doc.x, y: doc.y
     }
 
-    console.log("--bodyStartPosition--", bodyStartPosition)
-
     // certificate body will come here
 
 

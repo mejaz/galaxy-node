@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
       callback(new Error("Invalid request Id"))
     } else {
       let todayDate = new Date()
-      let fileName = `${req.docType.toUpperCase()}_${cert.issuedTo.empId}_${cert._id}_${moment(todayDate).format("DDMMYYYY")}_SIGNED.pdf`
+      let fileName = `${req.docType.toUpperCase()}_${cert.issuedTo.empId}_${cert.issuedTo.fullName()}_${moment(todayDate).format("DDMMYYYY-HHMMSS")}_SIGNED.pdf`
       cert.certSignedPath = `${req.dirLoc}${fileName}`
       cert = await cert.save()
       req.cert = cert
