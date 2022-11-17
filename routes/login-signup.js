@@ -50,7 +50,7 @@ router.post(
 );
 
 router.get('/verify-token', passport.authenticate('jwt', { session: false }), (req,res) => {
-  res.send();
+  res.send({success: true});
 });
 
 module.exports = router;
