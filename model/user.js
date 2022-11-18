@@ -1,23 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validator = require('validator')
-
-const ADMIN = 'ADMIN'
-const MANAGER = 'MANAGER'
-const LEAD = 'LEAD'
-const STAFF = 'STAFF'
-
-const ROLES = [
-  ADMIN,
-  MANAGER,
-  LEAD,
-  STAFF
-]
-
-const GENDERS = [
-  'M',
-  'F'
-]
+const {GENDERS, ROLES, STAFF, COMPANIES} = require("../src/constants")
 
 const Schema = mongoose.Schema;
 
@@ -65,7 +49,7 @@ const UserSchema = new Schema({
     },
   },
   role: {
-    type: String,
+    type: Number,
     required: [true, 'Role is a required field.'],
     enum: {
       values: ROLES,
@@ -190,6 +174,14 @@ const UserSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'designation',
     required: true,
+  },
+  company: {
+    type: String,
+    required: [true, 'Company is a required field.'],
+    enum: {
+      values: COMPANIES,
+      message: `{VALUE} id not supported`
+    },
   },
 }, {
   timestamps: true,

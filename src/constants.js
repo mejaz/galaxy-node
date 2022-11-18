@@ -1,3 +1,11 @@
+const AIFI = 'AIFI'
+const QUANTLASE = 'QUANTLASE'
+
+const COMPANIES = [
+  AIFI,
+  QUANTLASE,
+]
+
 const SALARY_CERTIFICATE = "Salary Certificate"
 const SALARY_TRANSFER_LETTER = "Salary Transfer Letter"
 const EXPERIENCE_LETTER = "Experience Letter"
@@ -18,6 +26,33 @@ const CERTIFICATES_SHORT_OBJ = {
   [EXPERIENCE_LETTER]: EXPERIENCE_LETTER_SHORT,
 }
 
+const ADMIN = 0
+const ADMIN_TEXT = 'Admin'
+const MANAGER = 1
+const MANAGER_TEXT = 'Manager'
+const STAFF = 2
+const STAFF_TEXT = 'Staff'
+
+const ROLE_TEXT_MAP = {
+  [ADMIN]: ADMIN_TEXT,
+  [MANAGER]: MANAGER_TEXT,
+  [STAFF]: STAFF_TEXT
+}
+
+const ROLES = [
+  ADMIN,
+  MANAGER,
+  STAFF
+]
+
+const MALE = "M"
+const FEMALE = "F"
+
+const GENDERS = [
+  MALE,
+  FEMALE
+]
+
 module.exports = {
   CERTIFICATES_OBJ,
   SALARY_CERTIFICATE_SHORT,
@@ -26,5 +61,17 @@ module.exports = {
   SALARY_CERTIFICATE,
   SALARY_TRANSFER_LETTER,
   EXPERIENCE_LETTER,
-  CERTIFICATES_SHORT_OBJ
+  CERTIFICATES_SHORT_OBJ,
+  GENDERS,
+  ROLES,
+  ROLE_TEXT_MAP,
+  ADMIN,
+  ADMIN_TEXT,
+  MANAGER,
+  MANAGER_TEXT,
+  STAFF,
+  STAFF_TEXT,
+  COMPANIES,
+  AIFI,
+  QUANTLASE,
 }
