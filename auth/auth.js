@@ -1,6 +1,7 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const UserModel = require('../model/user');
+const CompanyModel = require("../model/company");
 const JWTStrategy = require('passport-jwt').Strategy;
 const ExtractJWT = require('passport-jwt').ExtractJwt;
 
@@ -31,7 +32,7 @@ passport.use(
     },
     async (email, password, done) => {
       try {
-        const user = await UserModel.findOne({email})
+        const user = await UserModel.findOne({email}).populate({path: 'company', model: CompanyModel})
         if (!user) {
           return done(null, false, {message: 'User not found'})
         }
@@ -55,7 +56,8 @@ passport.use(
     },
     async (token, done) => {
       try {
-        return done(null, token.user);
+        const reqUser = await UserModel.findById(token.user._id).populate('company')
+        return done(null, reqUser);
       } catch (error) {
         done(error);
       }

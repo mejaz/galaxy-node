@@ -25,7 +25,7 @@ router.get(
     try {
       const {id} = req.query
       let responseObj = {}
-      let user = await UserModel.findOne({_id: id})
+      let user = await UserModel.findOne({_id: id, company: req.user.company})
 
       if (!user) {
         return res.status(400).json({message: 'User not found!'})
@@ -68,7 +68,7 @@ router.get(
   async (req, res, next) => {
     try {
       const {id} = req.query
-      let user = await UserModel.findOne({_id: id}).populate("designation")
+      let user = await UserModel.findOne({_id: id, company: req.user.company}).populate("designation")
 
       if (!user) {
         return res.status(400).json({message: 'User not found!'})
@@ -109,7 +109,8 @@ router.post(
       // save user details
       const user = new UserModel({
         ...rest,
-        designation: dns
+        designation: dns,
+        company: req.user.company,
       })
 
       let userObj = await user.save()
@@ -177,7 +178,7 @@ router.post(
       }
 
       // update user details
-      let user = await UserModel.findByIdAndUpdate(id, {...req.body, designation: dns},
+      let user = await UserModel.findOneAndUpdate({_id: id, company: req.user.company}, {...req.body, designation: dns},
         {new: true})
 
       // update local address
@@ -215,10 +216,10 @@ router.get(
     const skip = +page * +rowsPerPage
     const limit = +rowsPerPage
 
-    let filterOptions = {}
+    let filterOptions = {company: req.user.company, role: {$ne: 'ADMIN'}}
 
     if (empId) {
-      filterOptions["empId"] = empId
+      filterOptions["empId"] = {'$regex': empId, '$options': 'i'}
     } else if (mobNo) {
       // searching only with the last 9 chars or less
       filterOptions["primaryMobile"] = mobNo.length <= 9 ? mobNo : mobNo.slice(-9)
@@ -246,7 +247,7 @@ router.post(
       const userId = req.params.id
       const {formType} = req.body
 
-      let employee = await UserModel.findOne({_id: userId}).populate('designation')
+      let employee = await UserModel.findOne({_id: userId, company: req.user.company}).populate('designation')
 
       if (!employee || !(formType in CERTIFICATES_OBJ)) {
         return res.status(400).json({success: false, message: "Invalid Request"})
@@ -268,6 +269,7 @@ router.post(
         issuedTo: employee,
         issuedBy: req.user,
         issuedOn: todayDate,
+        company: req.user.company,
       })
 
       cert = await cert.save()

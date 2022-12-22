@@ -170,10 +170,6 @@ const UserSchema = new Schema({
     lowercase: true,
     trim: true,
     maxLength: 100,
-    index: {
-      unique: true,
-      partialFilterExpression: {email: {$type: "string"}}
-    },
     validate: {
       validator: function (value) {
         return value ? validator.isEmail(value) : true
@@ -185,6 +181,11 @@ const UserSchema = new Schema({
   password: {
     type: String,
     required: false
+  },
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'company',
+    required: true,
   },
   designation: {
     type: mongoose.Schema.Types.ObjectId,

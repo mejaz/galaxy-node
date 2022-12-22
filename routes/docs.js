@@ -86,14 +86,14 @@ router.get(
     const skip = +page * +rowsPerPage
     const limit = +rowsPerPage
 
-    let defaultFilterOptions = {}
+    let defaultFilterOptions = {company: req.user.company}
 
     if (docType) {
       defaultFilterOptions["docType"] = CERTIFICATES_OBJ[docType]
     }
 
     if (docNo) {
-      const filterOpts = {docNo, ...defaultFilterOptions}
+      const filterOpts = {docNo: {'$regex': docNo, '$options': 'i'}, ...defaultFilterOptions}
       const count = await CertsModel.countDocuments({...filterOpts})
       let certs = await CertsModel.find({...filterOpts})
         .skip(skip)
@@ -105,7 +105,7 @@ router.get(
       }
 
     } else if (empId) {
-      let issuedTo = await UserModel.findOne({empId})
+      let issuedTo = await UserModel.findOne({empId: {'$regex': empId, '$options': 'i'}, company: req.user.company})
       if (!issuedTo) {
         return res.json([])
       }
@@ -123,7 +123,7 @@ router.get(
         rows: serializeCerts(certs)
       }
     } else if (lastName) {
-      let users = await UserModel.find({lastName: {'$regex': lastName, '$options': 'i'}})
+      let users = await UserModel.find({lastName: {'$regex': lastName, '$options': 'i'}, company: req.user.company})
       let userIds = users.map(obj => obj._id)
 
       const filterOpts = {issuedTo: {$in: userIds}, ...defaultFilterOptions}

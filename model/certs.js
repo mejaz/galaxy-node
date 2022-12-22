@@ -54,6 +54,11 @@ const CertsSchema = new Schema({
     type: String,
     trim: true,
   },
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'company',
+    required: true,
+  },
 }, {
   timestamps: true,
   strictPopulate: false
