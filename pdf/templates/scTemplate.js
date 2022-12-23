@@ -12,12 +12,12 @@ async function generateSC({
                             salaryInAlpha,
                             nation,
                             qrcode,
-                          }, outputPath) {
+                          }, outputPath, company) {
   try {
     // get the base template with header and footer
     const {doc, writeStream, bodyStartPosition} = await generateBaseTemplate({
       docNo, todayDate, qrcode
-    }, outputPath)
+    }, outputPath, company)
 
     // set the doc cursor positions to write the body
     doc.x = bodyStartPosition.x

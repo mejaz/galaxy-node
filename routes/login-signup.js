@@ -37,7 +37,7 @@ router.post(
                 user: body,
                 exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24)  // 24 hr token
               }, process.env.JWT_SECRET_KEY);
-              return res.json({ token, company: user.company.shortName });
+              return res.status(201).json({ token, company: user.company.shortName });
             }
           );
         } catch (error) {

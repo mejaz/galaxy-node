@@ -8,9 +8,8 @@ const MARGINS = {
   right: 18
 }
 
-const AIFI_LOGO = './pdf/logo.png'
-
-async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
+async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath, company) {
+  const LOGO = `./pdf/${company}/logo.png`
   try {
     // Create a document
     const doc = new PDFDocument({size: 'A4', margins: MARGINS});
@@ -19,7 +18,7 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
     let writeStream = fs.createWriteStream(`./${outputPath}`)
     doc.pipe(writeStream);
 
-    doc.image(AIFI_LOGO, 440, 0, {width: 130})
+    doc.image(LOGO, 440, 0, {width: 130})
     doc.moveDown(6)
 
     // Embed a font, set the font size, and render some text
@@ -71,7 +70,7 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath) {
       .stroke('#f88f00')
 
     doc
-      .image(AIFI_LOGO, 87, 802, {width: 20})
+      .image(LOGO, 87, 802, {width: 20})
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(9)
       .text('AIFI Technologies LLC • Office Unit 1-8, Masdar City, Abu Dhabi, U.A.E • P.O. Box: 53543', 107, 810,);

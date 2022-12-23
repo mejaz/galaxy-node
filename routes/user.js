@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const UserModel = require("../model/user")
 const AddressModel = require("../model/address")
-const {prepareData, generateQRCode} = require("../pdf/helper")
+const {prepareData, generateQRCode, generateFilename, generateCertPath} = require("../pdf/helper")
 const generateSC = require("../pdf/templates/scTemplate");
 const generateSTC = require("../pdf/templates/stcTemplate");
 const generateCOE = require("../pdf/templates/coeTemplate");
@@ -247,12 +247,15 @@ router.post(
       const userId = req.params.id
       const {formType} = req.body
 
+      // query employee
       let employee = await UserModel.findOne({_id: userId, company: req.user.company}).populate('designation')
 
       if (!employee || !(formType in CERTIFICATES_OBJ)) {
+        // in case of invalid user or invalid certificate request, return 400
         return res.status(400).json({success: false, message: "Invalid Request"})
       }
 
+      // if employee is still active, we can't generate experience letter
       if (employee.isActive && formType === EXPERIENCE_LETTER_SHORT) {
         return res.status(400).json({
           success: false,
@@ -261,38 +264,37 @@ router.post(
       }
 
       // make an entry into certificates table
-      let todayDate = new Date()
-
+      let dateToday = new Date()
       let cert = new CertsModel({
         docNo: req.body.docNo,
         docType: CERTIFICATES_OBJ[formType],
         issuedTo: employee,
         issuedBy: req.user,
-        issuedOn: todayDate,
+        issuedOn: dateToday,
         company: req.user.company,
       })
-
       cert = await cert.save()
-      let filename = `${formType}_${employee.empId}_${employee.fullName()}_${moment(todayDate).format("DDMMYYYY-HHMMSS")}_UNSIGNED.pdf`
 
-      let dirPath = `certificates/${formType.toLowerCase()}`
-      !fs.existsSync(dirPath) && fs.mkdirSync(dirPath);
-      let certPath = path.join(dirPath, filename)
-
-      // qrcode url
-      let qrcodeUrl = `${req.protocol}:\//${req.get('host')}/docs/view/${cert._id}`;
-      let qrcode = await generateQRCode({certificateUrl: qrcodeUrl})
+      const company = req.user.company.shortName.toLowerCase()
+      // generate the pdf filename
+      let filename = generateFilename(formType, employee, dateToday, false)
+      // generate certificate path
+      let certPath = generateCertPath(formType, company, filename)
+      // generate QR Code
+      let qrcode = await generateQRCode(req, cert)
+      // prepare the data that goes into the certificate
       let dataForTemplate = prepareData(req.body, employee, qrcode)
 
       if (dataForTemplate) {
         let result;
         if (formType === SALARY_CERTIFICATE_SHORT) {
-          result = await generateSC(dataForTemplate, certPath)
+          result = await generateSC(dataForTemplate, certPath, company)
         } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
-          result = await generateSTC(dataForTemplate, certPath)
+          result = await generateSTC(dataForTemplate, certPath, company)
         } else if (formType === EXPERIENCE_LETTER_SHORT) {
-          result = await generateCOE(dataForTemplate, certPath)
+          result = await generateCOE(dataForTemplate, certPath, company)
         }
+        console.log("-->", certPath)
         if (result) {
           cert.certUnsignedPath = certPath
           cert.fileName = filename

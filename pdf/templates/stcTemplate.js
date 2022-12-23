@@ -4,13 +4,13 @@ async function generateSTC(
   {
     docNo, fullNameWithTitle, designation, todayDate, doj, passportNo,
     salaryInDigits, salaryInAlpha, nation, qrcode, accNo, iban,
-  }, outputPath) {
+  }, outputPath, company) {
   try {
 
     // get the base template with header and footer
     const {doc, writeStream, bodyStartPosition} = await generateBaseTemplate({
       docNo, todayDate, qrcode
-    }, outputPath)
+    }, outputPath, company)
 
     // set the doc cursor positions to write the body
     doc.x = bodyStartPosition.x
