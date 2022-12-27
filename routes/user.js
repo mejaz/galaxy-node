@@ -6,6 +6,22 @@ const nationalities = require("i18n-nationality");
 const moment = require("moment");
 const DesignationModel = require("../model/designation");
 
+async function addUpdateAddress(userObj, localAddress, localCountry, localCity, permanentAddress, permanentCountry, permanentCity) {
+  userObj.localAddress = {
+    streetAddress: localAddress,
+    country: localCountry,
+    city: localCity
+  }
+  userObj = await userObj.save()
+
+  userObj.permanentAddress = {
+    streetAddress: permanentAddress,
+    country: permanentCountry,
+    city: permanentCity
+  }
+  userObj = await userObj.save()
+}
+
 router.get(
   '/profile',
   async (req, res, next) => {
@@ -20,28 +36,7 @@ router.get(
 
       let userObj = user.toObject()
       delete userObj['password']
-
       responseObj = {...responseObj, ...userObj}
-
-      // query addresses
-      let addresses = await AddressModel.find({occupant: user})
-      for (let obj of addresses) {
-        if (obj.addressType === 'LOCAL') {
-          responseObj = {
-            ...responseObj,
-            localAddress: obj.streetAddress,
-            localCountry: obj.country,
-            localCity: obj.city,
-          }
-        } else {
-          responseObj = {
-            ...responseObj,
-            permanentAddress: obj.streetAddress,
-            permanentCountry: obj.country,
-            permanentCity: obj.city,
-          }
-        }
-      }
       return res.json(responseObj)
     } catch (error) {
       console.log(error)
@@ -102,34 +97,7 @@ router.post(
 
       let userObj = await user.save()
 
-      if (localAddress || localCountry || localCity) {
-        // save local address
-        let addressLocal = new AddressModel({
-          streetAddress: localAddress,
-          country: localCountry,
-          city: localCity,
-          addressType: 'LOCAL',
-          occupant: userObj,
-          createdBy: req.user,
-          modifiedBy: req.user
-        })
-        await addressLocal.save()
-      }
-
-      if (permanentAddress || permanentCountry || permanentCity) {
-        // save permanent address
-        let addressPermanent = new AddressModel({
-          streetAddress: permanentAddress,
-          country: permanentCountry,
-          city: permanentCity,
-          addressType: 'PERMANENT',
-          occupant: userObj,
-          createdBy: req.user,
-          modifiedBy: req.user
-        })
-
-        await addressPermanent.save()
-      }
+      await addUpdateAddress(userObj, localAddress, localCountry, localCity, permanentAddress, permanentCountry, permanentCity);
 
       return res.status(201).json({success: true, message: 'For submitted successfully!'})
     } catch (error) {
@@ -164,28 +132,21 @@ router.post(
         return res.status(400).json({message: "Invalid designation"})
       }
 
+      const {
+        localAddress,
+        localCountry,
+        localCity,
+        permanentAddress,
+        permanentCountry,
+        permanentCity,
+        ...rest
+      } = req.body
+
       // update user details
-      let user = await UserModel.findOneAndUpdate({_id: id, company: req.user.company}, {...req.body, designation: dns},
+      let userObj = await UserModel.findOneAndUpdate({_id: id, company: req.user.company}, {...rest, designation: dns},
         {new: true})
 
-      // update local address
-      let localAdd = await AddressModel.findOneAndUpdate({occupant: user, addressType: 'LOCAL'}, {
-          streetAddress: req.body.localAddress,
-          country: req.body.localCountry,
-          city: req.body.localCity,
-        },
-        {new: true, upsert: true})
-
-      // update permanent address
-      let permAdd = await AddressModel.findOneAndUpdate({occupant: user, addressType: 'PERMANENT'}, {
-          streetAddress: req.body.permanentAddress,
-          country: req.body.permanentCountry,
-          city: req.body.permanentCity,
-        },
-        {new: true, upsert: true})
-
-      let obj = user.toObject()
-      delete obj['password']
+      await addUpdateAddress(userObj, localAddress, localCountry, localCity, permanentAddress, permanentCountry, permanentCity);
 
       return res.status(201).json({success: true, message: 'For submitted successfully!'})
     } catch (error) {
