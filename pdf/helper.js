@@ -21,9 +21,9 @@ const generateQRCodeUrl = (req, cert) => {
   return `${protocol}:\//${host}/docs/view/${certificateId}`
 }
 
-const generateQRCode = async (req, cert) => {
+const generateQRCode = async (req, cert, mainColor) => {
   const certificateUrl = generateQRCodeUrl(req, cert)
-  return QRCode.toDataURL(certificateUrl, {color: {dark: "#f88f00"}});  // add brand color to db
+  return QRCode.toDataURL(certificateUrl, {color: {dark: mainColor}});  // add brand color to db
 }
 
 const generateFilename = (formType, employee, dateToday, signed) => {

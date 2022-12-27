@@ -5,7 +5,17 @@ const moment = require("moment");
 const fs = require("fs");
 const router = express.Router();
 const multer = require("multer");
-const {CERTIFICATES_SHORT_OBJ, CERTIFICATES_OBJ} = require("../src/constants")
+const {CERTIFICATES_SHORT_OBJ, CERTIFICATES_OBJ,
+  EXPERIENCE_LETTER_SHORT,
+  SALARY_CERTIFICATE_SHORT,
+  SALARY_TRANSFER_LETTER_SHORT
+} = require("../src/constants")
+const nationalities = require("i18n-nationality");
+const CompanyModel = require("../model/company");
+const {generateFilename, generateCertPath, generateQRCode, prepareData} = require("../pdf/helper");
+const generateSC = require("../pdf/templates/scTemplate");
+const generateSTC = require("../pdf/templates/stcTemplate");
+const generateCOE = require("../pdf/templates/coeTemplate");
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -152,6 +162,120 @@ router.get(
       }
     }
     return res.json(result)
+  }
+)
+
+router.get(
+  '/docNo',
+  async (req, res, next) => {
+    try {
+      const {docCode} = req.query
+      let company = await CompanyModel.findOne({docCode, shortName: req.user.company.shortName}).populate("designation")
+
+      if (!company) {
+        return res.status(400).json({message: 'doc code not found!'})
+      }
+
+      const responseObj = {
+        docCode: company[docCode],
+      }
+
+      return res.json(responseObj)
+    } catch (error) {
+      console.log(error)
+      return res.status(400).json({message: 'Invalid request'})
+    }
+  }
+);
+
+router.post(
+  '/generate/:id',
+  async (req, res) => {
+
+    try {
+      const userId = req.params.id
+      const {formType} = req.body
+
+      // query employee
+      let employee = await UserModel.findOne({_id: userId, company: req.user.company}).populate('designation')
+
+      if (!employee || !(formType in CERTIFICATES_OBJ)) {
+        // in case of invalid user or invalid certificate request, return 400
+        return res.status(400).json({success: false, message: "Invalid Request"})
+      }
+
+      // if employee is still active, we can't generate experience letter
+      if (employee.isActive && formType === EXPERIENCE_LETTER_SHORT) {
+        return res.status(400).json({
+          success: false,
+          message: "Employee still active, cannot generate Experience Letter."
+        })
+      }
+
+      // make an entry into certificates table
+      let dateToday = new Date()
+      let cert = new CertsModel({
+        docNo: req.body.docNo,
+        docType: CERTIFICATES_OBJ[formType],
+        issuedTo: employee,
+        issuedBy: req.user,
+        issuedOn: dateToday,
+        company: req.user.company,
+      })
+      cert = await cert.save()
+
+      const company = req.user.company.shortName.toLowerCase()
+      // generate the pdf filename
+      let filename = generateFilename(formType, employee, dateToday, false)
+      // generate certificate path
+      let certPath = generateCertPath(formType, company, filename)
+
+      // company main color
+      const mainColor = "#"+process.env[`MAIN_COLOR_${req.user.company.shortName.toUpperCase()}`]
+      // generate QR Code
+      let qrcode = await generateQRCode(req, cert, mainColor)
+
+      // prepare the data that goes into the certificate
+      let dataForTemplate = prepareData(req.body, employee, qrcode)
+
+      if (dataForTemplate) {
+        // generate base template with headers and footers
+        const generateBaseTemplate = require(`../pdf/${company}/generateBaseTemplate`);
+        const {doc, writeStream, bodyStartPosition} = await generateBaseTemplate({
+          docNo: dataForTemplate.docNo,
+          todayDate: dataForTemplate.todayDate,
+          qrcode: dataForTemplate.qrcode
+        }, certPath, company, mainColor)
+
+        let result;
+        if (formType === SALARY_CERTIFICATE_SHORT) {
+          result = await generateSC(dataForTemplate, doc, writeStream, bodyStartPosition)
+        } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
+          result = await generateSTC(dataForTemplate, doc, writeStream, bodyStartPosition)
+        } else if (formType === EXPERIENCE_LETTER_SHORT) {
+          result = await generateCOE(dataForTemplate, doc, writeStream, bodyStartPosition)
+        }
+
+        if (result) {
+          cert.certUnsignedPath = certPath
+          cert.fileName = filename
+          await cert.save()
+
+          res.setHeader('Content-type', 'application/pdf')
+          res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
+          res.setHeader('requestId', `${cert._id}`)
+          return fs.createReadStream(certPath).pipe(res);
+        } else {
+          await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
+          return res.status(400).json({message: "Error generating pdf"})
+        }
+      } else {
+        return res.status(400).send({message: "Invalid Request, not all data provided"})
+      }
+    } catch (error) {
+      console.log(error)
+      return res.status(400).send({message: error.message})
+    }
   }
 )
 

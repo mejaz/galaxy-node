@@ -18,6 +18,27 @@ const CompanySchema = new Schema({
     maxLength: 100,
     unique: true,
   },
+  scDocNo: {
+    type: String,
+    required: [true, 'Salary Certificate Doc No is a required field.'],
+    trim: true,
+    maxLength: 100,
+    unique: true,
+  },
+  stcDocNo: {
+    type: String,
+    required: [true, 'Salary Transfer Certificate Doc No is a required field.'],
+    trim: true,
+    maxLength: 100,
+    unique: true,
+  },
+  coeDocNo: {
+    type: String,
+    required: [true, 'Certificate of Experience Doc No is a required field.'],
+    trim: true,
+    maxLength: 100,
+    unique: true,
+  },
 }, {
   timestamps: true,
   strictPopulate: false

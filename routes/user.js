@@ -2,21 +2,8 @@ const express = require('express');
 const router = express.Router();
 const UserModel = require("../model/user")
 const AddressModel = require("../model/address")
-const {prepareData, generateQRCode, generateFilename, generateCertPath} = require("../pdf/helper")
-const generateSC = require("../pdf/templates/scTemplate");
-const generateSTC = require("../pdf/templates/stcTemplate");
-const generateCOE = require("../pdf/templates/coeTemplate");
 const nationalities = require("i18n-nationality");
-const {
-  SALARY_CERTIFICATE_SHORT,
-  SALARY_TRANSFER_LETTER_SHORT,
-  EXPERIENCE_LETTER_SHORT,
-  CERTIFICATES_OBJ
-} = require("../src/constants")
-const CertsModel = require("../model/certs");
 const moment = require("moment");
-const path = require("path");
-const fs = require("fs");
 const DesignationModel = require("../model/designation");
 
 router.get(
@@ -239,83 +226,5 @@ router.get(
   }
 )
 
-router.post(
-  '/generate/:id',
-  async (req, res) => {
-
-    try {
-      const userId = req.params.id
-      const {formType} = req.body
-
-      // query employee
-      let employee = await UserModel.findOne({_id: userId, company: req.user.company}).populate('designation')
-
-      if (!employee || !(formType in CERTIFICATES_OBJ)) {
-        // in case of invalid user or invalid certificate request, return 400
-        return res.status(400).json({success: false, message: "Invalid Request"})
-      }
-
-      // if employee is still active, we can't generate experience letter
-      if (employee.isActive && formType === EXPERIENCE_LETTER_SHORT) {
-        return res.status(400).json({
-          success: false,
-          message: "Employee still active, cannot generate Experience Letter."
-        })
-      }
-
-      // make an entry into certificates table
-      let dateToday = new Date()
-      let cert = new CertsModel({
-        docNo: req.body.docNo,
-        docType: CERTIFICATES_OBJ[formType],
-        issuedTo: employee,
-        issuedBy: req.user,
-        issuedOn: dateToday,
-        company: req.user.company,
-      })
-      cert = await cert.save()
-
-      const company = req.user.company.shortName.toLowerCase()
-      // generate the pdf filename
-      let filename = generateFilename(formType, employee, dateToday, false)
-      // generate certificate path
-      let certPath = generateCertPath(formType, company, filename)
-      // generate QR Code
-      let qrcode = await generateQRCode(req, cert)
-      // prepare the data that goes into the certificate
-      let dataForTemplate = prepareData(req.body, employee, qrcode)
-
-      if (dataForTemplate) {
-        let result;
-        if (formType === SALARY_CERTIFICATE_SHORT) {
-          result = await generateSC(dataForTemplate, certPath, company)
-        } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
-          result = await generateSTC(dataForTemplate, certPath, company)
-        } else if (formType === EXPERIENCE_LETTER_SHORT) {
-          result = await generateCOE(dataForTemplate, certPath, company)
-        }
-        console.log("-->", certPath)
-        if (result) {
-          cert.certUnsignedPath = certPath
-          cert.fileName = filename
-          await cert.save()
-
-          res.setHeader('Content-type', 'application/pdf')
-          res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
-          res.setHeader('requestId', `${cert._id}`)
-          return fs.createReadStream(certPath).pipe(res);
-        } else {
-          await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
-          return res.status(400).json({message: "Error generating pdf"})
-        }
-      } else {
-        return res.status(400).send({message: "Invalid Request, not all data provided"})
-      }
-    } catch (error) {
-      console.log(error)
-      return res.status(400).send({message: error.message})
-    }
-  }
-)
 
 module.exports = router;
