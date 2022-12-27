@@ -1,16 +1,11 @@
 const express = require('express');
-const CertsModel = require("../model/certs");
-const UserModel = require("../model/user");
-const moment = require("moment");
 const DesignationModel = require("../model/designation");
 const router = express.Router();
-
-
 
 router.get(
   '/',
   async (req, res) => {
-    let dns = await DesignationModel.find({})
+    let dns = await DesignationModel.find({name: {$not: {'$regex': "admin", '$options': "i"}}})
     return res.json(dns)
   }
 )

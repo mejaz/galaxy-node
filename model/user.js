@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validator = require('validator')
+const AddressSchema = require("./address")
 
 const ADMIN = 'ADMIN'
 const MANAGER = 'MANAGER'
@@ -191,6 +192,14 @@ const UserSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'designation',
     required: true,
+  },
+  localAddress: {
+    type: AddressSchema,
+    required: false
+  },
+  permanentAddress: {
+    type: AddressSchema,
+    required: false
   },
 }, {
   timestamps: true,
