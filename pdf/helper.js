@@ -8,11 +8,34 @@ const {
   EXPERIENCE_LETTER_SHORT,
   CERTIFICATES_OBJ
 } = require("../src/constants")
+const fs = require("fs");
+const path = require("path");
 
 const toTitleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
 
-const generateQRCode = async ({certificateUrl}) => {
-  return QRCode.toDataURL(certificateUrl, {color: {dark: "#f88f00"}});
+const generateQRCodeUrl = (req, cert) => {
+  const protocol = req.protocol
+  const host = req.get('host')
+  const certificateId = cert._id
+
+  return `${protocol}:\//${host}/docs/view/${certificateId}`
+}
+
+const generateQRCode = async (req, cert, mainColor) => {
+  const certificateUrl = generateQRCodeUrl(req, cert)
+  return QRCode.toDataURL(certificateUrl, {color: {dark: mainColor}});  // add brand color to db
+}
+
+const generateFilename = (formType, employee, dateToday, signed) => {
+  const dateFormat = "DDMMYYYY-HHMMSS"
+  const signedText = signed ? "SIGNED" : "UNSIGNED"
+  return `${formType}_${employee.empId}_${employee.fullName()}_${moment(dateToday).format(dateFormat)}_${signedText}.pdf`
+}
+
+const generateCertPath = (formType, company, filename) => {
+  let dirPath = `certificates/${company}/${formType.toLowerCase()}`
+  !fs.existsSync(dirPath) && fs.mkdirSync(dirPath, {recursive: true});
+  return path.join(dirPath, filename)
 }
 
 function prepareData({docNo, formType, ...reqBody}, employee, qrcode) {
@@ -68,4 +91,6 @@ function prepareData({docNo, formType, ...reqBody}, employee, qrcode) {
 module.exports = {
   prepareData,
   generateQRCode,
+  generateFilename,
+  generateCertPath,
 }

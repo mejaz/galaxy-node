@@ -42,14 +42,12 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath, comp
     doc
       .image(qrcode, 450, 650, {width: 120, height: 120})
 
-    // doc.moveTo(618, 650)
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
       .text('Yours sincerely,', 18, 650);
 
     doc.moveDown(5)
-
 
     doc
       .font('./pdf/fonts/GOTHICB.TTF')
