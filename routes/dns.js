@@ -1,7 +1,4 @@
 const express = require('express');
-const CertsModel = require("../model/certs");
-const UserModel = require("../model/user");
-const moment = require("moment");
 const DesignationModel = require("../model/designation");
 const router = express.Router();
 
