@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const UserModel = require("../model/user")
-const AddressModel = require("../model/address")
 const nationalities = require("i18n-nationality");
 const moment = require("moment");
 const DesignationModel = require("../model/designation");
@@ -164,7 +163,7 @@ router.get(
     const skip = +page * +rowsPerPage
     const limit = +rowsPerPage
 
-    let filterOptions = {company: req.user.company, role: {$ne: 'ADMIN'}}
+    let filterOptions = {company: req.user.company}
 
     if (empId) {
       filterOptions["empId"] = {'$regex': empId, '$options': 'i'}

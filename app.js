@@ -69,30 +69,30 @@ app.get('/api/countries.json', (req, res) => {
 })
 
 
-app.post(
-  '/api/public/docs/:id/verify',
-  async (req, res) => {
-    const {lastName, empId} = req.body
-    const {id} = req.params
-
-    let cert = mongoose.isValidObjectId(id) ? await CertsModel.findById(id).populate('issuedTo') : null
-
-    if (!cert) {
-      return res.status(400).json({success: false, message: 'invalid request'})
-    }
-
-    if (cert.issuedTo.lastName.toLowerCase() === lastName.toLowerCase()
-      && cert.issuedTo.empId.toLowerCase() === empId.toLowerCase()) {
-      if (cert.certSignedPath) {
-        return res.status(201).sendFile(path.join(__dirname, cert.certSignedPath))
-      } else {
-        return res.status(400).json({success: false, message: 'signed document not available'})
-      }
-    } else {
-      return res.status(400).json({success: false, message: 'invalid request'})
-    }
-  }
-)
+// app.post(
+//   '/api/public/docs/:id/verify',
+//   async (req, res) => {
+//     const {lastName, empId} = req.body
+//     const {id} = req.params
+//
+//     let cert = mongoose.isValidObjectId(id) ? await CertsModel.findById(id).populate('issuedTo') : null
+//
+//     if (!cert) {
+//       return res.status(400).json({success: false, message: 'invalid request'})
+//     }
+//
+//     if (cert.issuedTo.lastName.toLowerCase() === lastName.toLowerCase()
+//       && cert.issuedTo.empId.toLowerCase() === empId.toLowerCase()) {
+//       if (cert.certSignedPath) {
+//         return res.status(201).sendFile(path.join(__dirname, cert.certSignedPath))
+//       } else {
+//         return res.status(400).json({success: false, message: 'signed document not available'})
+//       }
+//     } else {
+//       return res.status(400).json({success: false, message: 'invalid request'})
+//     }
+//   }
+// )
 
 
 app.listen(port, () => {

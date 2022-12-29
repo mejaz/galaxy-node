@@ -46,6 +46,23 @@ const CertsSchema = new Schema({
     type: Date,
     required: true,
   },
+  preCertS3Url: {
+    type: String,
+    trim: true,
+  },
+  certS3Url: {
+    type: String,
+    trim: true,
+  },
+  certS3Key: {
+    type: String,
+    trim: true,
+  },
+  isSigned: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   certUnsignedPath: {
     type: String,
     trim: true,

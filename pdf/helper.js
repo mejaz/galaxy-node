@@ -13,23 +13,22 @@ const path = require("path");
 
 const toTitleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
 
-const generateQRCodeUrl = (req, cert) => {
-  const protocol = req.protocol
-  const host = req.get('host')
-  const certificateId = cert._id
+// const generateQRCodeUrl = (req, cert) => {
+//   const protocol = req.protocol
+//   const host = req.get('host')
+//   const certificateId = cert._id
+//
+//   return `${protocol}:\//${host}/docs/view/${certificateId}`
+// }
 
-  return `${protocol}:\//${host}/docs/view/${certificateId}`
-}
-
-const generateQRCode = async (req, cert, mainColor) => {
-  const certificateUrl = generateQRCodeUrl(req, cert)
-  return QRCode.toDataURL(certificateUrl, {color: {dark: mainColor}});  // add brand color to db
+const generateQRCode = async (s3CertPath, mainColor) => {
+  return QRCode.toDataURL(s3CertPath, {color: {dark: mainColor}});  // add brand color to db
 }
 
 const generateFilename = (formType, employee, dateToday, signed) => {
-  const dateFormat = "DDMMYYYY-HHMMSS"
+  const dateFormat = "DDMMYYYYHHMMSS"
   const signedText = signed ? "SIGNED" : "UNSIGNED"
-  return `${formType}_${employee.empId}_${employee.fullName()}_${moment(dateToday).format(dateFormat)}_${signedText}.pdf`
+  return `${formType}_${employee.empId}_${employee.fullNameWithUnderscore()}_${moment(dateToday).format(dateFormat)}_${signedText}.pdf`
 }
 
 const generateCertPath = (formType, company, filename) => {
@@ -38,12 +37,21 @@ const generateCertPath = (formType, company, filename) => {
   return path.join(dirPath, filename)
 }
 
-function prepareData({docNo, formType, ...reqBody}, employee, qrcode) {
+const generateS3CertPath = (formType, company, filename) => {
+  let filePostFix = `${company}/${formType.toUpperCase()}/${filename}`
+  return {
+    s3CertPath: `${process.env.AWS_FILE_PATH_PRE_FIX}/${filePostFix}`,
+    postFix: filePostFix
+  }
+}
+
+function prepareData({docNo, formType, ...reqBody}, employee, qrcode, company) {
   const todayDate = moment().format("Do MMMM YYYY")
   let finalData = {
     docNo,
     passportNo: employee.passNo,
     todayDate,
+    company,
   }
 
   if (formType === SALARY_CERTIFICATE_SHORT) {
@@ -88,9 +96,16 @@ function prepareData({docNo, formType, ...reqBody}, employee, qrcode) {
   return false
 }
 
+const startsWithVowel = (char) => {
+  let vowel = ['a', 'e', 'i', 'o', 'u']
+  return vowel.indexOf(char.toLowerCase()) > -1 ? "an" : 'a'
+}
+
 module.exports = {
   prepareData,
   generateQRCode,
   generateFilename,
   generateCertPath,
+  generateS3CertPath,
+  startsWithVowel,
 }

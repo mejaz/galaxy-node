@@ -5,7 +5,7 @@ const router = express.Router();
 router.get(
   '/',
   async (req, res) => {
-    let dns = await DesignationModel.find({name: {$not: {'$regex': "admin", '$options': "i"}}})
+    let dns = await DesignationModel.find({})
     return res.json(dns)
   }
 )

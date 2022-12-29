@@ -1,4 +1,5 @@
 const generateBaseTemplate = require("./generateBaseTemplate");
+const {startsWithVowel} = require("../helper");
 
 async function generateSC({
                             docNo,
@@ -26,11 +27,11 @@ async function generateSC({
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text(fullNameWithTitle).moveDown(0.5);
+      .text(`Name: ${fullNameWithTitle}`).moveDown(0.5);
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text(designation).moveDown(0.5);
+      .text(`Designation: ${designation}`).moveDown(0.5);
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
@@ -91,7 +92,7 @@ async function generateSC({
       .font('./pdf/fonts/GOTHICB.TTF')
       .text(doj, {continued: true})
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(' in the capacity of a ', {continued: true})
+      .text(` in the capacity of ${startsWithVowel(designation[0])} `, {continued: true})
       .font('./pdf/fonts/GOTHICB.TTF')
       .text(`${designation}.`)
 
