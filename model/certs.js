@@ -63,14 +63,6 @@ const CertsSchema = new Schema({
     required: true,
     default: false,
   },
-  certUnsignedPath: {
-    type: String,
-    trim: true,
-  },
-  certSignedPath: {
-    type: String,
-    trim: true,
-  },
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'company',
