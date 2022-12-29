@@ -199,7 +199,10 @@ const UserSchema = new Schema({
 UserSchema.pre(
   'save',
   async function (next) {
-    const user = this;
+    // dont update password if its not changed
+    if (!this.isModified('password')) return next();
+
+    // generate hash and save
     if (this.password) {
       this.password = await bcrypt.hash(this.password, 10);
     }
