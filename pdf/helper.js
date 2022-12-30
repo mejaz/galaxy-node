@@ -66,7 +66,8 @@ function prepareData({docNo, formType, ...reqBody}, employee, qrcode, company) {
       nation: nationalities.getName(employee.nationality, 'en'),
       empId: employee.empId,
       qrcode: qrcode,
-      addressTo: reqBody.addressTo,
+      receivingEntity: reqBody.receivingEntity,
+      receivingEntityAddress: reqBody.receivingEntityAddress,
     }
   } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
     const salary = reqBody['salary']

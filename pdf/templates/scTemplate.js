@@ -13,7 +13,8 @@ async function generateSC({
                             salaryInAlpha,
                             nation,
                             qrcode,
-                            addressTo,
+                            receivingEntity,
+                            receivingEntityAddress,
                           }, doc, writeStream, bodyStartPosition) {
   try {
     // get the base template with header and footer
@@ -57,11 +58,24 @@ async function generateSC({
 
     doc.moveDown(2)
 
-    if (addressTo) {
+    if (receivingEntity || receivingEntityAddress) {
       doc
         .font('./pdf/fonts/GOTHICB.TTF')
         .fontSize(12)
-        .text(`To: ${addressTo}`)
+        .text(`To`).moveDown(0.5)
+      if (receivingEntity) {
+        doc
+          .font('./pdf/fonts/GOTHICB.TTF')
+          .fontSize(12)
+          .text(receivingEntity).moveDown(0.5)
+      }
+      if (receivingEntityAddress) {
+        doc
+          .font('./pdf/fonts/GOTHICB.TTF')
+          .fontSize(12)
+          .text(receivingEntityAddress).moveDown(0.5)
+      }
+
     } else {
       let toWhomItMayConcernText = 'To whomsoever, it may concern'
       doc
