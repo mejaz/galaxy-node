@@ -13,6 +13,7 @@ async function generateSC({
                             salaryInAlpha,
                             nation,
                             qrcode,
+                            addressTo,
                           }, doc, writeStream, bodyStartPosition) {
   try {
     // get the base template with header and footer
@@ -56,16 +57,23 @@ async function generateSC({
 
     doc.moveDown(2)
 
-    let toWhomItMayConcernText = 'To whomsoever, it may concern'
-    doc
-      .font('./pdf/fonts/GOTHICB.TTF')
-      .fontSize(12)
-      .text(toWhomItMayConcernText, {align: 'center'})
+    if (addressTo) {
+      doc
+        .font('./pdf/fonts/GOTHICB.TTF')
+        .fontSize(12)
+        .text(`To: ${addressTo}`)
+    } else {
+      let toWhomItMayConcernText = 'To whomsoever, it may concern'
+      doc
+        .font('./pdf/fonts/GOTHICB.TTF')
+        .fontSize(12)
+        .text(toWhomItMayConcernText, {align: 'center'})
 
-    doc
-      .moveTo(205, 330)
-      .lineTo(205 + doc.widthOfString(toWhomItMayConcernText), 330)
-      .stroke('#000000')
+      doc
+        .moveTo(205, 330)
+        .lineTo(205 + doc.widthOfString(toWhomItMayConcernText), 330)
+        .stroke('#000000')
+    }
 
     doc.moveDown(2)
 
