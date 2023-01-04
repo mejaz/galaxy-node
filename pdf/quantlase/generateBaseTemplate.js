@@ -8,7 +8,7 @@ const MARGINS = {
   right: 18
 }
 
-async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath, company) {
+async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath, company, mainColor) {
   const LOGO = `./pdf/${company}/logo.png`
   try {
     // Create a document
@@ -42,14 +42,12 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath, comp
     doc
       .image(qrcode, 450, 650, {width: 120, height: 120})
 
-    // doc.moveTo(618, 650)
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
       .text('Yours sincerely,', 18, 650);
 
     doc.moveDown(5)
-
 
     doc
       .font('./pdf/fonts/GOTHICB.TTF')
@@ -60,25 +58,30 @@ async function generateBaseTemplate({docNo, todayDate, qrcode}, outputPath, comp
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text('C.E.O.');
+      .text('Executive Director');
 
-    // doc footer
     doc
       .lineGap(0)
-      .moveTo(18, 801)
-      .lineTo(570, 801)
-      .stroke('#f88f00')
+      .fillColor(mainColor)
+      .font('./pdf/fonts/GOTHICB.TTF')
+      .fontSize(9)
+      .text('Quantlase Lab L.L.C.', 18, 795,);
 
     doc
-      .image(LOGO, 87, 802, {width: 20})
-      .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(9)
-      .text('AIFI Technologies LLC • Office Unit 1-8, Masdar City, Abu Dhabi, U.A.E • P.O. Box: 53543', 107, 810,);
+      .text('Royal Group Building, Ministries Complex', 18, 810,);
+
+    doc
+      .fontSize(9)
+      .text('www.quantlaselab.com', 450, 810,);
+
+    doc
+      .fontSize(9)
+      .text('Abu Dhabi, UAE', 18, 825,);
 
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
-      .fontSize(9)
-      .text(' Tel: (+971) 2 628 2583 • email: info@aifitechnologies.com', 170, 825,);
+      .fillColor("#000")
 
     return {
       writeStream,

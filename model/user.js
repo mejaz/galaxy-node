@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validator = require('validator')
+const AddressSchema = require("./address")
 
 const ADMIN = 'ADMIN'
 const MANAGER = 'MANAGER'
@@ -170,10 +171,6 @@ const UserSchema = new Schema({
     lowercase: true,
     trim: true,
     maxLength: 100,
-    index: {
-      unique: true,
-      partialFilterExpression: {email: {$type: "string"}}
-    },
     validate: {
       validator: function (value) {
         return value ? validator.isEmail(value) : true
@@ -186,10 +183,23 @@ const UserSchema = new Schema({
     type: String,
     required: false
   },
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'company',
+    required: true,
+  },
   designation: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'designation',
     required: true,
+  },
+  localAddress: {
+    type: AddressSchema,
+    required: false
+  },
+  permanentAddress: {
+    type: AddressSchema,
+    required: false
   },
 }, {
   timestamps: true,

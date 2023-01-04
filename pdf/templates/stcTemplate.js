@@ -1,16 +1,10 @@
-const generateBaseTemplate = require("./generateBaseTemplate");
 
 async function generateSTC(
   {
     docNo, fullNameWithTitle, designation, todayDate, doj, passportNo,
     salaryInDigits, salaryInAlpha, nation, qrcode, accNo, iban,
-  }, outputPath) {
+  }, doc, writeStream, bodyStartPosition) {
   try {
-
-    // get the base template with header and footer
-    const {doc, writeStream, bodyStartPosition} = await generateBaseTemplate({
-      docNo, todayDate, qrcode
-    }, outputPath)
 
     // set the doc cursor positions to write the body
     doc.x = bodyStartPosition.x
