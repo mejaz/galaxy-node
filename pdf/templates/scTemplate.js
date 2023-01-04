@@ -1,4 +1,5 @@
 const generateBaseTemplate = require("./generateBaseTemplate");
+const {startsWithVowel} = require("../helper");
 
 async function generateSC({
                             docNo,
@@ -12,6 +13,8 @@ async function generateSC({
                             salaryInAlpha,
                             nation,
                             qrcode,
+                            receivingEntity,
+                            receivingEntityAddress,
                           }, doc, writeStream, bodyStartPosition) {
   try {
     // get the base template with header and footer
@@ -26,11 +29,11 @@ async function generateSC({
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text(fullNameWithTitle).moveDown(0.5);
+      .text(`Name: ${fullNameWithTitle}`).moveDown(0.5);
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text(designation).moveDown(0.5);
+      .text(`Designation: ${designation}`).moveDown(0.5);
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
@@ -55,16 +58,36 @@ async function generateSC({
 
     doc.moveDown(2)
 
-    let toWhomItMayConcernText = 'To whomsoever, it may concern'
-    doc
-      .font('./pdf/fonts/GOTHICB.TTF')
-      .fontSize(12)
-      .text(toWhomItMayConcernText, {align: 'center'})
+    if (receivingEntity || receivingEntityAddress) {
+      doc
+        .font('./pdf/fonts/GOTHICB.TTF')
+        .fontSize(12)
+        .text(`To`).moveDown(0.5)
+      if (receivingEntity) {
+        doc
+          .font('./pdf/fonts/GOTHICB.TTF')
+          .fontSize(12)
+          .text(receivingEntity).moveDown(0.5)
+      }
+      if (receivingEntityAddress) {
+        doc
+          .font('./pdf/fonts/GOTHICB.TTF')
+          .fontSize(12)
+          .text(receivingEntityAddress).moveDown(0.5)
+      }
 
-    doc
-      .moveTo(205, 330)
-      .lineTo(205 + doc.widthOfString(toWhomItMayConcernText), 330)
-      .stroke('#000000')
+    } else {
+      let toWhomItMayConcernText = 'To whomsoever, it may concern'
+      doc
+        .font('./pdf/fonts/GOTHICB.TTF')
+        .fontSize(12)
+        .text(toWhomItMayConcernText, {align: 'center'})
+
+      doc
+        .moveTo(205, 330)
+        .lineTo(205 + doc.widthOfString(toWhomItMayConcernText), 330)
+        .stroke('#000000')
+    }
 
     doc.moveDown(2)
 
@@ -91,7 +114,7 @@ async function generateSC({
       .font('./pdf/fonts/GOTHICB.TTF')
       .text(doj, {continued: true})
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(' in the capacity of a ', {continued: true})
+      .text(` in the capacity of ${startsWithVowel(designation[0])} `, {continued: true})
       .font('./pdf/fonts/GOTHICB.TTF')
       .text(`${designation}.`)
 

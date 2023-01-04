@@ -2,18 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validator = require('validator')
 const AddressSchema = require("./address")
-
-const ADMIN = 'ADMIN'
-const MANAGER = 'MANAGER'
-const LEAD = 'LEAD'
-const STAFF = 'STAFF'
-
-const ROLES = [
-  ADMIN,
-  MANAGER,
-  LEAD,
-  STAFF
-]
+const {ROLES, STAFF} = require("../src/constants");
 
 const GENDERS = [
   'M',
@@ -210,7 +199,10 @@ const UserSchema = new Schema({
 UserSchema.pre(
   'save',
   async function (next) {
-    const user = this;
+    // dont update password if its not changed
+    if (!this.isModified('password')) return next();
+
+    // generate hash and save
     if (this.password) {
       this.password = await bcrypt.hash(this.password, 10);
     }
@@ -240,6 +232,12 @@ UserSchema.methods.toJSON = function () {
 UserSchema.methods.fullName = function () {
   const user = this
   return `${user.firstName} ${user.lastName}`
+}
+
+// get full name with underscore
+UserSchema.methods.fullNameWithUnderscore = function () {
+  const user = this
+  return `${user.firstName.replace(/\s+/g, '_')}_${user.lastName.replace(/\s+/g, '_')}`
 }
 
 // get full name with title

@@ -1,61 +1,21 @@
 const express = require('express');
 const CertsModel = require("../model/certs");
 const UserModel = require("../model/user");
-const moment = require("moment");
-const fs = require("fs");
+const {unlink} = require("fs/promises")
 const router = express.Router();
-const multer = require("multer");
-const {CERTIFICATES_SHORT_OBJ, CERTIFICATES_OBJ,
+const {
+  CERTIFICATES_OBJ,
   EXPERIENCE_LETTER_SHORT,
   SALARY_CERTIFICATE_SHORT,
   SALARY_TRANSFER_LETTER_SHORT
 } = require("../src/constants")
-const nationalities = require("i18n-nationality");
 const CompanyModel = require("../model/company");
-const {generateFilename, generateCertPath, generateQRCode, prepareData} = require("../pdf/helper");
+const {generateFilename, generateCertPath, generateQRCode, prepareData, generateS3CertPath} = require("../pdf/helper");
 const generateSC = require("../pdf/templates/scTemplate");
 const generateSTC = require("../pdf/templates/stcTemplate");
 const generateCOE = require("../pdf/templates/coeTemplate");
-
-const storage = multer.diskStorage({
-  destination: (req, file, callback) => {
-    const docType = CERTIFICATES_SHORT_OBJ[req.body.docType].toLowerCase()
-    const dir = `certificates/${docType}/`;
-    !fs.existsSync(dir) && fs.mkdirSync(dir);
-    req.dirLoc = dir
-    req.docType = docType
-    callback(null, dir);
-  },
-  filename: async (req, file, callback) => {
-    const {id} = req.params
-    let cert = await CertsModel.findById(id).populate('issuedTo')
-    if (!cert) {
-      callback(new Error("Invalid request Id"))
-    } else {
-      let todayDate = new Date()
-      let fileName = `${req.docType.toUpperCase()}_${cert.issuedTo.empId}_${cert.issuedTo.fullName()}_${moment(todayDate).format("DDMMYYYY-HHMMSS")}_SIGNED.pdf`
-      cert.certSignedPath = `${req.dirLoc}${fileName}`
-      cert = await cert.save()
-      req.cert = cert
-
-      callback(null, fileName);
-    }
-
-  }
-})
-
-const fileFilter = async (req, file, callback) => {
-  let ext = file.originalname.lastIndexOf(".");
-  ext = file.originalname.substr(ext + 1);
-  if (ext.toLowerCase() !== 'pdf') {
-    callback(new Error("File extension not supported, please upload .pdf file"))
-  } else {
-    callback(null, true)
-  }
-}
-
-const upload = multer({storage, fileFilter}).single("file");
-
+const s3 = require("../src/service/s3");
+const formidable = require('express-formidable');
 
 const serializeCerts = (certs) => certs.map(cert => {
   return {
@@ -65,7 +25,7 @@ const serializeCerts = (certs) => certs.map(cert => {
     issuedTo: cert.issuedTo.fullName(),
     issuedBy: cert.issuedBy.lastName,
     issuedOn: cert.issuedOn,
-    isSignedUploaded: !!cert.certSignedPath,
+    isSignedUploaded: cert.isSigned ? 'Signed' : 'Un-signed',
   }
 })
 
@@ -214,6 +174,14 @@ router.post(
 
       // make an entry into certificates table
       let dateToday = new Date()
+      const company = req.user.company.shortName.toLowerCase()
+      // generate the pdf filename
+      let filename = generateFilename(formType, employee, dateToday, false)
+      // generate certificate local path
+      let certPath = generateCertPath(formType, company, filename)
+      // generate certificate s3 path
+      let {s3CertPath, postFix} = generateS3CertPath(formType, company, filename)
+
       let cert = new CertsModel({
         docNo: req.body.docNo,
         docType: CERTIFICATES_OBJ[formType],
@@ -221,22 +189,17 @@ router.post(
         issuedBy: req.user,
         issuedOn: dateToday,
         company: req.user.company,
+        preCertS3Url: s3CertPath,  // this is a pre-generated path, keeping it to see if we ran into mis-match ith s3
       })
       cert = await cert.save()
 
-      const company = req.user.company.shortName.toLowerCase()
-      // generate the pdf filename
-      let filename = generateFilename(formType, employee, dateToday, false)
-      // generate certificate path
-      let certPath = generateCertPath(formType, company, filename)
-
       // company main color
-      const mainColor = "#"+process.env[`MAIN_COLOR_${req.user.company.shortName.toUpperCase()}`]
+      const mainColor = "#" + process.env[`MAIN_COLOR_${req.user.company.shortName.toUpperCase()}`]
       // generate QR Code
-      let qrcode = await generateQRCode(req, cert, mainColor)
+      let qrcode = await generateQRCode(cert.preCertS3Url, mainColor)
 
       // prepare the data that goes into the certificate
-      let dataForTemplate = prepareData(req.body, employee, qrcode)
+      let dataForTemplate = prepareData(req.body, employee, qrcode, req.user.company)
 
       if (dataForTemplate) {
         // generate base template with headers and footers
@@ -248,6 +211,7 @@ router.post(
         }, certPath, company, mainColor)
 
         let result;
+        // generating certificate
         if (formType === SALARY_CERTIFICATE_SHORT) {
           result = await generateSC(dataForTemplate, doc, writeStream, bodyStartPosition)
         } else if (formType === SALARY_TRANSFER_LETTER_SHORT) {
@@ -257,15 +221,24 @@ router.post(
         }
 
         if (result) {
-          cert.certUnsignedPath = certPath
-          cert.fileName = filename
-          await cert.save()
+          // upload to S3, postFix has company and filetype with filename, its an actual s3 object key
+          let s3Response = await s3.uploadFile(postFix, certPath)
 
+          cert.certS3Url = s3Response.url
+          cert.fileName = filename
+          cert.certS3Key = postFix
+          cert = await cert.save()
+
+          // delete the local copy of the file
+          await unlink(certPath)
+
+          // preparing to return the generated certificate
           res.setHeader('Content-type', 'application/pdf')
           res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
           res.setHeader('requestId', `${cert._id}`)
-          return fs.createReadStream(certPath).pipe(res);
+          return s3.downloadFile(postFix, res);
         } else {
+          // TODO write a clean up function for delete certificate
           await cert.delete()  // remove this entry from the DB as there was issue in generating pdf
           return res.status(400).json({message: "Error generating pdf"})
         }
@@ -292,7 +265,7 @@ router.get(
       }
       return res.json(cert)
     } catch (error) {
-      return res.json({message: error.message})
+      return res.status(400).json({message: error.message})
     }
   }
 )
@@ -303,15 +276,25 @@ router.delete(
 
     try {
       const {id} = req.params
-      let cert = await CertsModel.findByIdAndDelete(id)
+      // let cert = await CertsModel.findByIdAndDelete(id)
+      let cert = await CertsModel.findById(id)
 
       if (!cert) {
         return res.status(400).json({message: "Invalid Request Number"})
       }
 
+      await s3.deleteFile(cert.certS3Key)
+      await cert.remove()
+
       return res.send(cert)
     } catch (error) {
-      return res.json({message: error.message})
+      console.log(error)
+      if (error.statusCode === 404) {
+        return res.status(400).json({message: "Error deleting, document not found"})
+      } else {
+        return res.status(400).json({message: "Error deleting certificate"})
+      }
+
     }
   }
 )
@@ -322,22 +305,16 @@ router.get(
 
     try {
       const {id} = req.params
-      const {signed} = req.query
-
       let cert = await CertsModel.findOne({_id: id})
 
       if (!cert) {
         return res.status(400).json({message: "Invalid Request Number"})
       }
 
-      let certPath = signed === "true" ? cert.certSignedPath : cert.certUnsignedPath
-      const fileName = certPath.replace(/^.*[\\\/]/, '')
-
       res.setHeader('Content-type', 'application/pdf')
-      res.setHeader('Content-Disposition', `attachment; filename=${fileName}`)
+      res.setHeader('Content-Disposition', `attachment; filename=${cert.fileName}`)
 
-      return fs.createReadStream(certPath).pipe(res);
-
+      return s3.downloadFile(cert.certS3Key, res);
     } catch (error) {
       return res.json({message: error.message})
     }
@@ -346,17 +323,40 @@ router.get(
 
 router.post(
   '/:id/upload',
+  formidable(),
   async (req, res) => {
-    upload(req, res, function (err) {
-      if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading.
-        return res.status(400).json({message: err.message});
-      } else if (err) {
-        // An unknown error occurred when uploading.
-        return res.status(400).json({message: err.message});
+    try {
+      const {id} = req.params
+      let cert = await CertsModel.findOne({_id: id})
+
+      // if the certificate id is invalid
+      if (!cert) {
+        return res.status(400).json({message: "Invalid Request Number"})
       }
-      return res.json(req.cert)
-    })
+
+      // convert the file blob to buffer to upload to S3
+      let buffer = Buffer.from(req.files.file.path)
+      // uploading the updated doc to s3
+      await s3.uploadFile(cert.certS3Key, buffer)
+      cert.isSigned = true
+      await cert.save()
+
+      return res.json(cert)
+    } catch (error) {
+      console.log(error)
+      return res.status(400).status(400).json({message: "Error occurred updating document"})
+    }
+
+    // upload(req, res, function (err) {
+    //   if (err instanceof multer.MulterError) {
+    //     // A Multer error occurred when uploading.
+    //     return res.status(400).json({message: err.message});
+    //   } else if (err) {
+    //     // An unknown error occurred when uploading.
+    //     return res.status(400).json({message: err.message});
+    //   }
+    //   return res.json(req.cert)
+    // })
   }
 )
 
