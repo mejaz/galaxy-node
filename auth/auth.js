@@ -2,8 +2,10 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const UserModel = require('../model/user');
 const CompanyModel = require("../model/company");
+const {ADMIN} = require("../src/constants");
 const JWTStrategy = require('passport-jwt').Strategy;
 const ExtractJWT = require('passport-jwt').ExtractJwt;
+
 
 passport.use(
   'signup',
@@ -32,7 +34,7 @@ passport.use(
     },
     async (email, password, done) => {
       try {
-        const user = await UserModel.findOne({email}).populate({path: 'company', model: CompanyModel})
+        const user = await UserModel.findOne({email, role: ADMIN}).populate({path: 'company', model: CompanyModel})
         if (!user) {
           return done(null, false, {message: 'User not found'})
         }

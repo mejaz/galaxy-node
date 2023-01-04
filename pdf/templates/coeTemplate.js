@@ -1,4 +1,5 @@
 const generateBaseTemplate = require("./generateBaseTemplate");
+const {startsWithVowel} = require("../helper");
 
 async function generateCOE({
                             docNo,
@@ -13,6 +14,7 @@ async function generateCOE({
                             salaryInAlpha,
                             nation,
                             qrcode,
+                            company,
                           }, doc, writeStream, bodyStartPosition) {
   try {
     // get the base template with header and footer
@@ -27,11 +29,11 @@ async function generateCOE({
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text(fullNameWithTitle).moveDown(0.5);
+      .text(`Name: ${fullNameWithTitle}`).moveDown(0.5);
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
-      .text(designation).moveDown(0.5);
+      .text(`Designation: ${designation}`).moveDown(0.5);
     doc
       .font('./pdf/fonts/GOTHIC.TTF')
       .fontSize(12)
@@ -86,7 +88,7 @@ async function generateCOE({
         continued: true
       })
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(`, was posted as a `, {
+      .text(`, was posted as ${startsWithVowel(designation[0])} `, {
         continued: true
       })
       .font('./pdf/fonts/GOTHICB.TTF')
@@ -94,7 +96,7 @@ async function generateCOE({
         continued: true
       })
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(`in AIFI Technologies LLC from`, {
+      .text(`in ${company.fullName} from`, {
         continued: true
       })
       .font('./pdf/fonts/GOTHICB.TTF')

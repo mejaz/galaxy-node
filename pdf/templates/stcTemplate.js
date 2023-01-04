@@ -1,3 +1,4 @@
+const {startsWithVowel} = require("../helper");
 
 async function generateSTC(
   {
@@ -64,7 +65,7 @@ async function generateSTC(
       .font('./pdf/fonts/GOTHICB.TTF')
       .text(doj, {continued: true})
       .font('./pdf/fonts/GOTHIC.TTF')
-      .text(' in the capacity of a ', {continued: true})
+      .text(` in the capacity of ${startsWithVowel(designation[0])} `, {continued: true})
       .font('./pdf/fonts/GOTHICB.TTF')
       .text(`${designation}.`)
 

@@ -46,13 +46,22 @@ const CertsSchema = new Schema({
     type: Date,
     required: true,
   },
-  certUnsignedPath: {
+  preCertS3Url: {
     type: String,
     trim: true,
   },
-  certSignedPath: {
+  certS3Url: {
     type: String,
     trim: true,
+  },
+  certS3Key: {
+    type: String,
+    trim: true,
+  },
+  isSigned: {
+    type: Boolean,
+    required: true,
+    default: false,
   },
   company: {
     type: mongoose.Schema.Types.ObjectId,
