@@ -8,7 +8,6 @@ require("./db").connect()
 const express = require('express')
 const path = require('path');
 const passport = require('passport');
-const host = process.env.APP_HOST
 const port = process.env.APP_PORT
 
 // routes
@@ -22,9 +21,6 @@ const app = express()
 
 // middlewares
 require('./auth/auth');
-const CertsModel = require("./model/certs");
-const mongoose = require("mongoose");
-const moment = require("moment");
 
 app.use(express.json());
 // to serve the client app
@@ -69,32 +65,6 @@ app.get('/api/countries.json', (req, res) => {
 })
 
 
-// app.post(
-//   '/api/public/docs/:id/verify',
-//   async (req, res) => {
-//     const {lastName, empId} = req.body
-//     const {id} = req.params
-//
-//     let cert = mongoose.isValidObjectId(id) ? await CertsModel.findById(id).populate('issuedTo') : null
-//
-//     if (!cert) {
-//       return res.status(400).json({success: false, message: 'invalid request'})
-//     }
-//
-//     if (cert.issuedTo.lastName.toLowerCase() === lastName.toLowerCase()
-//       && cert.issuedTo.empId.toLowerCase() === empId.toLowerCase()) {
-//       if (cert.certSignedPath) {
-//         return res.status(201).sendFile(path.join(__dirname, cert.certSignedPath))
-//       } else {
-//         return res.status(400).json({success: false, message: 'signed document not available'})
-//       }
-//     } else {
-//       return res.status(400).json({success: false, message: 'invalid request'})
-//     }
-//   }
-// )
-
-
 app.listen(port, () => {
-  console.log(`Galaxy Node app is listening at http://${host}:${port}`)
+  console.log(`Galaxy Node app is listening at port: ${port}`)
 })

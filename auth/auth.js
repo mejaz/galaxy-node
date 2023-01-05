@@ -6,25 +6,6 @@ const {ADMIN} = require("../src/constants");
 const JWTStrategy = require('passport-jwt').Strategy;
 const ExtractJWT = require('passport-jwt').ExtractJwt;
 
-
-passport.use(
-  'signup',
-  new LocalStrategy(
-    {
-      usernameField: 'email',
-      passwordField: 'password',
-    },
-    async (email, password, done) => {
-      try {
-        const user = await UserModel.create({email, password})
-        return done(null, user)
-      } catch (error) {
-        done(error)
-      }
-    }
-  )
-)
-
 passport.use(
   'login',
   new LocalStrategy(
